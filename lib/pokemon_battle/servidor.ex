@@ -72,6 +72,23 @@ defmodule PokemonBattle.Servidor do
   end
 
   # Lógica de Comandos
+1
+  defp ejecutar("crear_equipo", [nombre | resto], s) do
+
+    ids = Enum.join(resto, "")
+          |> String.split(",")
+          |> Enum.map(&String.trim/1)
+          |> Enum.reject(&(&1 == ""))
+          |> Enum.map(&String.to_integer/1)
+
+    case GestorEntrenadores.crear_equipo(s.user, nombre, ids) do
+      :ok ->
+        IO.puts("¡Equipo '#{nombre}' guardado con éxito!")
+        {:ok, s}
+      {:error, e} ->
+        {:error, e, s}
+    end
+  end
 
   # Login
   defp ejecutar("login", [u, p], s) do
@@ -122,6 +139,17 @@ defmodule PokemonBattle.Servidor do
   end
 
   # Batallas
+
+  defp ejecutar("conectar_nodo", [nombre], s) do
+    case Cluster.conectar(nombre) do
+      {:ok, msg} ->
+        IO.puts(msg)
+        {:ok, s}
+      {:error, e} ->
+        {:error, e, s}
+    end
+  end
+
   defp ejecutar("crear_sala", [equipo], s) do
     case GestorSalas.crear_sala(s.user, equipo) do
       {:ok, id} -> IO.puts("Sala #{id} creada."); {:ok, %{s | sala: id}}
@@ -129,10 +157,16 @@ defmodule PokemonBattle.Servidor do
     end
   end
 
-  defp ejecutar("unirse", [id, equipo], s) do
+  defp ejecutar("unirse", args, s) when length(args) >= 2 do
+    equipo = List.last(args)
+    id = args |> Enum.slice(0..-2//1) |> Enum.join(" ")
+
     case GestorSalas.unirse_sala(id, s.user, equipo) do
-      {:ok, _} -> {:ok, %{s | batalla: id}}
-      {:error, e} -> {:error, e, s}
+      {:ok, _} ->
+        IO.puts("¡Te has unido a la sala #{id}!")
+        {:ok, %{s | batalla: id}}
+      {:error, e} ->
+        {:error, e, s}
     end
   end
 
@@ -153,6 +187,7 @@ defmodule PokemonBattle.Servidor do
     COMANDOS DISPONIBLES:
     - login <user> <pass>
     - perfil / inventario
+    - crear_equipo <nombre> <id1,id2,id3>
     - comprar <tipo> / abrir
     - crear_sala <equipo> / unirse <id> <equipo>
     - atacar <numero> / pasar

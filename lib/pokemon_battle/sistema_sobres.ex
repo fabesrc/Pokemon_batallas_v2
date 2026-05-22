@@ -83,7 +83,7 @@ defmodule PokemonBattle.SistemaSobres do
     %{
       id: generar_id(),
       especie: base["especie"],
-      dueno_original: dueno,
+      dueño_original: dueno,
       rareza: rareza,
       ataque: at,
       defensa: df,

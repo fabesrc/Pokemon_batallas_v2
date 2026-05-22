@@ -10,7 +10,21 @@ defmodule PokemonBattle.GestorSalas do
 
   #  API
   def crear_sala(user, equipo), do: GenServer.call(__MODULE__, {:crear, user, equipo, self()})
-  def unirse_sala(id, user, equipo), do: GenServer.call(__MODULE__, {:unirse, id, user, equipo, self()})
+  def unirse_sala(id, user, equipo) do
+    # Obtenemos todos los nodos (incluyendo el nuestro)
+    nodos = [node() | Node.list()]
+
+    # Buscamos en cada nodo hasta que uno nos responda con exito
+    Enum.find_value(nodos, {:error, "No existe esa sala en ningún nodo"}, fn n ->
+      case :rpc.call(n, GenServer, :call, [__MODULE__, {:unirse, id, user, equipo, self()}]) do
+        {:ok, res} -> {:ok, res}
+        {:error, "No existe esa sala"} -> false # Sigue buscando en el siguiente nodo
+        {:error, msg} -> {:error, msg}           
+        _ -> false
+      end
+    end)
+  end
+
   def listar_salas, do: GenServer.call(__MODULE__, :listar)
   def cancelar_sala(id, user), do: GenServer.call(__MODULE__, {:cancelar, id, user})
 
@@ -26,7 +40,7 @@ defmodule PokemonBattle.GestorSalas do
       {:error, msg} -> {:reply, {:error, msg}, state}
       {:ok, pokes} ->
         # Generar un ID simple
-        id = "sala_#{map_size(state) + 1}"
+        id = "S-#{map_size(state) + 1}"
         info = %{
           id: id,
           creador: usuario,

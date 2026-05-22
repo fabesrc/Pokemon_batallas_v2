@@ -4,7 +4,7 @@ defmodule PokemonBattle.MotorCombate do
     "Fuego"     => ["Planta", "Hielo", "Bicho"],
     "Agua"      => ["Fuego", "Roca", "Tierra"],
     "Planta"    => ["Agua", "Roca", "Tierra"],
-    "Eléctrico" => ["Agua", "Volador"],
+    "Electrico" => ["Agua", "Volador"],
     "Roca"      => ["Fuego", "Hielo", "Volador", "Bicho"]
   }
 
