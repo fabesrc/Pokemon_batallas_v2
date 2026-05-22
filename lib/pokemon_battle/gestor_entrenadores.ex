@@ -9,7 +9,16 @@ defmodule PokemonBattle.GestorEntrenadores do
   def cerrar_sesion(user), do: GenServer.call(__MODULE__, {:logout, user, self()})
   def esta_en_sesion?(user), do: GenServer.call(__MODULE__, {:esta_on, user})
   def pid_sesion(user), do: GenServer.call(__MODULE__, {:get_pid, user})
-  def obtener(user), do: GenServer.call(__MODULE__, {:get, user})
+  def obtener(user) do
+    # Buscar el nodo del clúster está logueado el usuario
+    nodos = [node() | Node.list()]
+
+    nodo_con_sesion = Enum.find(nodos, fn n ->
+      :rpc.call(n, __MODULE__, :esta_en_sesion?, [user]) == true
+    end) || node() # Si no lo encuentra, asume el nodo local
+
+    :rpc.call(nodo_con_sesion, GenServer, :call, [__MODULE__, {:get, user}])
+  end
   def todos, do: GenServer.call(__MODULE__, :todos)
 
   # Acciones de dinero y items
@@ -34,13 +43,22 @@ defmodule PokemonBattle.GestorEntrenadores do
     end)
     {:ok, %{trainers: trainers, sessions: %{}}}
   end
-
   @impl true
   def handle_call({:login, user, pass, pid}, _from, state) do
     case state.trainers[user] do
       nil ->
         # Si no existe, lo creamos de una
-        t = %{usuario: user, clave: pass, victorias: 0, monedas_actuales: 0, monedas_acumuladas: 0, inventario: [], sobres_pendientes: [], equipos: %{}}
+        t = %{
+          usuario: user,
+          clave: pass,
+          victorias: 0,
+          monedas_actuales: 0,
+          monedas_acumuladas: 0,
+          inventario: [],
+          # Se agrega el sobre básico inicial de bienvenida
+          sobres_pendientes: [%{id: :rand.uniform(999_999), tipo: "basico"}],
+          equipos: %{}
+        }
         new_state = %{state | trainers: Map.put(state.trainers, user, t), sessions: Map.put(state.sessions, pid, user)}
         Process.monitor(pid)
         guardar(new_state)
@@ -55,7 +73,10 @@ defmodule PokemonBattle.GestorEntrenadores do
         end
     end
   end
-
+  @impl true
+  def handle_call({:logout, _user, pid}, _from, state) do
+   {:reply, :ok, %{state | sessions: Map.delete(state.sessions, pid)}}
+  end
   @impl true
   def handle_call({:mod_money, user, delta}, _from, state) do
     t = state.trainers[user]
@@ -70,8 +91,6 @@ defmodule PokemonBattle.GestorEntrenadores do
       {:reply, {:error, "No existe"}, state}
     end
   end
-
-
   @impl true
   def handle_call({:add_pkmn, user, p}, _from, state) do
     t = state.trainers[user]
@@ -80,7 +99,15 @@ defmodule PokemonBattle.GestorEntrenadores do
     guardar(new_state)
     {:reply, :ok, new_state}
   end
-
+  @impl true
+  def handle_call({:rem_pkmn, user, id}, _from, state) do
+    t = state.trainers[user]
+    nuevo_inv = Enum.reject(t.inventario, &(&1.id == id))
+    t = %{t | inventario: nuevo_inv}
+    new_state = put_in(state.trainers[user], t)
+    guardar(new_state)
+    {:reply, :ok, new_state}
+  end
   @impl true
   def handle_call({:win, user}, _from, state) do
     t = state.trainers[user]
@@ -89,7 +116,6 @@ defmodule PokemonBattle.GestorEntrenadores do
     guardar(new_state)
     {:reply, :ok, new_state}
   end
-
   @impl true
   def handle_call({:new_team, user, nom, ids}, _from, state) do
     t = state.trainers[user]
@@ -104,11 +130,60 @@ defmodule PokemonBattle.GestorEntrenadores do
         {:reply, :ok, new_state}
     end
   end
-
+  @impl true
+  def handle_call({:del_team, user, nombre_equipo}, _from, state) do
+    t = state.trainers[user]
+    t = %{t | equipos: Map.delete(t.equipos, nombre_equipo)}
+    new_state = put_in(state.trainers[user], t)
+    guardar(new_state)
+    {:reply, :ok, new_state}
+  end
+  @impl true
+  def handle_call({:get, user}, _from, state) do
+    {:reply, state.trainers[user], state}
+  end
+  @impl true
+  def handle_call({:add_pack, user, sobre}, _from, state) do
+    t = state.trainers[user]
+    t = %{t | sobres_pendientes: t.sobres_pendientes ++ [sobre]}
+    new_state = put_in(state.trainers[user], t)
+    guardar(new_state)
+    {:reply, :ok, new_state}
+  end
+  @impl true
+  def handle_call({:rem_pack, user, id}, _from, state) do
+    t = state.trainers[user]
+    # Filtramos la lista para quitar el sobre usado
+    nuevos_sobres = Enum.reject(t.sobres_pendientes, &(&1.id == id))
+    t = %{t | sobres_pendientes: nuevos_sobres}
+    new_state = put_in(state.trainers[user], t)
+    guardar(new_state)
+    {:reply, :ok, new_state}
+  end
+  @impl true
+  def handle_call(:todos, _from, state) do
+    # Devuelve todos los entrenadores para la tabla de posiciones
+    {:reply, Map.values(state.trainers), state}
+  end
+  @impl true
+  def handle_call({:esta_on, user}, _from, state) do
+    # Busca si el usuario tiene una sesión activa (PID)
+    is_on = Enum.any?(state.sessions, fn {_pid, u} -> u == user end)
+    {:reply, is_on, state}
+  end
+  @impl true
+  def handle_call({:get_pid, user}, _from, state) do
+    # Obtiene el PID de un usuario conectado
+    pid = Enum.find_value(state.sessions, fn {p, u} -> if u == user, do: p end)
+    {:reply, pid, state}
+  end
   @impl true
   def handle_info({:DOWN, _ref, :process, pid, _}, state) do
     {:noreply, %{state | sessions: Map.delete(state.sessions, pid)}}
   end
+
+
+
 
   # Mantenimiento de datos
 
@@ -128,9 +203,13 @@ defmodule PokemonBattle.GestorEntrenadores do
 
   defp limpiar_pkm(p) do
     %{
-      id: p["id"], especie: p["especie"],
-      rareza: p["rareza"], ataque: p["ataque"],
-      defensa: p["defensa"], velocidad: p["velocidad"],
+      id: p["id"],
+      especie: p["especie"],
+      rareza: p["rareza"],
+      ataque: p["ataque"],
+      defensa: p["defensa"],
+      velocidad: p["velocidad"],
+      dueño_original: p["dueño_original"],
       movimientos: Enum.map(p["movimientos"] || [], fn m ->
         %{nombre: m["nombre"], tipo: m["tipo"], poder_base: m["poder_base"]}
       end)

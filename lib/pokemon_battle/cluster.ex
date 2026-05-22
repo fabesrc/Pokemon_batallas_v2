@@ -19,19 +19,19 @@ defmodule PokemonBattle.Cluster do
 
     # mapeamos los nodos a su cantidad de batallas y sacamos el menor
     {nodo, _cantidad} =
-      Enum.map(nodos, fn n -> {n, conteo_batallas(n)} end)
+      Enum.map(nodos, fn n -> {n, batallas_en_nodo(n)} end)
       |> Enum.min_by(fn {_n, count} -> count end)
 
     nodo
   end
 
 
-  defp conteo_batallas(n) do
+  def batallas_en_nodo(n) do
     if n == node() do
       # En mi nodo local
-      DynamicSupervisor.count_children(PokemonBattle.SupervisorBatallas).active
+      DynamicSupervisor.count_children(PokemonBattle.SupBatallas).active
     else
-      case :rpc.call(n, DynamicSupervisor, :count_children, [PokemonBattle.SupervisorBatallas]) do
+      case :rpc.call(n, DynamicSupervisor, :count_children, [PokemonBattle.SupBatallas]) do
         {:badrpc, _} -> 999 # Si falla el nodo, le ponemos carga infinita
         res -> res.active
       end
@@ -42,7 +42,7 @@ defmodule PokemonBattle.Cluster do
   def estado_cluster do
     for n <- listar_nodos() do
       local = if n == node(), do: "(yo)", else: ""
-      "#{n} #{local} -> #{conteo_batallas(n)} batallas"
+      "#{n} #{local} -> #{batallas_en_nodo(n)} batallas"
     end |> Enum.join("\n")
   end
 end

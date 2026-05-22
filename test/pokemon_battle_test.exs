@@ -76,16 +76,28 @@ defmodule PokemonBattleTest do
   end
 
   # Salas y Batallas
-  describe "Gestor de Salas" do
-    test "Crear y cancelar sala", %{usuario: u} do
-      # Simulamos un equipo vacio para el test de sala
-      GestorEntrenadores.crear_equipo(u, "e1", [])
-      {:ok, sala_id} = GestorSalas.crear_sala(u, "e1")
-      assert String.starts_with?(sala_id, "S-")
+  test "Crear y cancelar sala", %{usuario: u} do
+    # PASO A: Insertar un Pokémon real en el inventario para que el equipo sea válido
+    pkm_id = 123456
+    pokemon_test = %{
+      id: pkm_id,
+      especie: "Pikachu",
+      ataque: 50, defensa: 50, velocidad: 50,
+      movimientos: [],
+      dueño_original: u
+    }
+    GestorEntrenadores.agregar_pokemon(u, pokemon_test)
 
-      GestorSalas.cancelar_sala(sala_id, u)
-      assert Enum.find(GestorSalas.listar_salas(), &(&1.sala_id == sala_id)) == nil
-    end
+    # Crear el equipo usando el ID del Pokémon insertado
+    GestorEntrenadores.crear_equipo(u, "e1", [pkm_id])
+
+    {:ok, sala_id} = GestorSalas.crear_sala(u, "e1")
+    assert String.starts_with?(sala_id, "S-")
+
+    # Corregir el acceso al ID en la lista de salas
+    GestorSalas.cancelar_sala(sala_id, u)
+    # Usamos &1.id porque el GestorSalas devuelve %{id: ...} no %{sala_id: ...}
+    assert Enum.find(GestorSalas.listar_salas(), &(&1.id == sala_id)) == nil
   end
 
   # Persistencia de datos
