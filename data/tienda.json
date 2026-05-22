@@ -1,0 +1,12 @@
+[
+  {
+    "tipo": "basico",
+    "precio": 100,
+    "probabilidades": {"comun": 70, "raro": 25, "epico": 5}
+  },
+  {
+    "tipo": "avanzado",
+    "precio": 250,
+    "probabilidades": {"comun": 40, "raro": 45, "epico": 15}
+  }
+]

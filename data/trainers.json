@@ -1,0 +1,22 @@
+[
+  {
+    "equipos": {},
+    "clave": "clave123",
+    "inventario": [],
+    "monedas_actuales": 200,
+    "monedas_acumuladas": 200,
+    "sobres_pendientes": [],
+    "usuario": "test_692415",
+    "victorias": 0
+  },
+  {
+    "equipos": {},
+    "clave": "clave123",
+    "inventario": [],
+    "monedas_actuales": 500,
+    "monedas_acumuladas": 500,
+    "sobres_pendientes": [],
+    "usuario": "test_993529",
+    "victorias": 0
+  }
+]

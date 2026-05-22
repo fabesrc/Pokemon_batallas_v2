@@ -1,0 +1,22 @@
+[
+  {"especie": "charmander",  "tipos": ["Fuego"],            "ataque_base": 52, "defensa_base": 43,  "velocidad_base": 65},
+  {"especie": "squirtle",    "tipos": ["Agua"],             "ataque_base": 48, "defensa_base": 65,  "velocidad_base": 43},
+  {"especie": "bulbasaur",   "tipos": ["Planta"],           "ataque_base": 49, "defensa_base": 49,  "velocidad_base": 45},
+  {"especie": "pikachu",     "tipos": ["Eléctrico"],        "ataque_base": 55, "defensa_base": 40,  "velocidad_base": 90},
+  {"especie": "geodude",     "tipos": ["Roca", "Tierra"],   "ataque_base": 80, "defensa_base": 100, "velocidad_base": 20},
+  {"especie": "pidgey",      "tipos": ["Volador"],          "ataque_base": 45, "defensa_base": 40,  "velocidad_base": 56},
+  {"especie": "caterpie",    "tipos": ["Bicho"],            "ataque_base": 30, "defensa_base": 35,  "velocidad_base": 45},
+  {"especie": "seel",        "tipos": ["Hielo"],            "ataque_base": 45, "defensa_base": 55,  "velocidad_base": 45},
+  {"especie": "diglett",     "tipos": ["Tierra"],           "ataque_base": 55, "defensa_base": 25,  "velocidad_base": 95},
+  {"especie": "sandshrew",   "tipos": ["Tierra"],           "ataque_base": 75, "defensa_base": 85,  "velocidad_base": 40},
+  {"especie": "vulpix",      "tipos": ["Fuego"],            "ataque_base": 41, "defensa_base": 40,  "velocidad_base": 65},
+  {"especie": "oddish",      "tipos": ["Planta"],           "ataque_base": 50, "defensa_base": 55,  "velocidad_base": 30},
+  {"especie": "psyduck",     "tipos": ["Agua"],             "ataque_base": 52, "defensa_base": 48,  "velocidad_base": 55},
+  {"especie": "jigglypuff",  "tipos": ["Normal"],           "ataque_base": 45, "defensa_base": 20,  "velocidad_base": 20},
+  {"especie": "magnemite",   "tipos": ["Eléctrico"],        "ataque_base": 35, "defensa_base": 70,  "velocidad_base": 45},
+  {"especie": "onix",        "tipos": ["Roca"],             "ataque_base": 45, "defensa_base": 160, "velocidad_base": 70},
+  {"especie": "clefairy",    "tipos": ["Normal"],           "ataque_base": 45, "defensa_base": 48,  "velocidad_base": 35},
+  {"especie": "paras",       "tipos": ["Bicho", "Planta"],  "ataque_base": 70, "defensa_base": 55,  "velocidad_base": 25},
+  {"especie": "dewgong",     "tipos": ["Agua", "Hielo"],    "ataque_base": 70, "defensa_base": 80,  "velocidad_base": 70},
+  {"especie": "fearow",      "tipos": ["Volador"],          "ataque_base": 90, "defensa_base": 65,  "velocidad_base": 100}
+]
