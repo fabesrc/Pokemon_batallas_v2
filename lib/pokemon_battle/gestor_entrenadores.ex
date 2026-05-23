@@ -9,15 +9,14 @@ defmodule PokemonBattle.GestorEntrenadores do
   def cerrar_sesion(user), do: GenServer.call(__MODULE__, {:logout, user, self()})
   def esta_en_sesion?(user), do: GenServer.call(__MODULE__, {:esta_on, user})
   def pid_sesion(user), do: GenServer.call(__MODULE__, {:get_pid, user})
+
   def obtener(user) do
-    # Buscar el nodo del clúster está logueado el usuario
     nodos = [node() | Node.list()]
-
-    nodo_con_sesion = Enum.find(nodos, fn n ->
+    nodo_sesion = Enum.find(nodos, fn n ->
       :rpc.call(n, __MODULE__, :esta_en_sesion?, [user]) == true
-    end) || node() # Si no lo encuentra, asume el nodo local
+    end) || node()
 
-    :rpc.call(nodo_con_sesion, GenServer, :call, [__MODULE__, {:get, user}])
+    :rpc.call(nodo_sesion, GenServer, :call, [__MODULE__, {:get, user}])
   end
   def todos, do: GenServer.call(__MODULE__, :todos)
 
@@ -75,7 +74,7 @@ defmodule PokemonBattle.GestorEntrenadores do
   end
   @impl true
   def handle_call({:logout, _user, pid}, _from, state) do
-   {:reply, :ok, %{state | sessions: Map.delete(state.sessions, pid)}}
+    {:reply, :ok, %{state | sessions: Map.delete(state.sessions, pid)}}
   end
   @impl true
   def handle_call({:mod_money, user, delta}, _from, state) do
@@ -217,10 +216,43 @@ defmodule PokemonBattle.GestorEntrenadores do
   end
 
   defp guardar(state) do
-    # Convertir todo a lista y pasar a persistencia
+    # convertir todo a lista y pasar a persistencia
     lista = Map.values(state.trainers) |> Enum.map(&preparar_para_json/1)
     Persistencia.guardar_entrenadores(lista)
   end
 
-  defp preparar_para_json(t), do: t # En una version real aqui pasas atomos a strings
+  defp preparar_para_json(t) do
+    %{
+      "usuario" => t.usuario,
+      "clave" => t.clave,
+      "victorias" => t.victorias,
+      "monedas_actuales" => t.monedas_actuales,
+      "monedas_acumuladas" => t.monedas_acumuladas,
+      "sobres_pendientes" => Enum.map(t.sobres_pendientes, fn s ->
+        %{"id" => s.id, "tipo" => s.tipo}
+      end),
+      "inventario" => Enum.map(t.inventario, &preparar_pkm_json/1),
+      "equipos" => t.equipos
+    }
+  end
+
+  # auxiliar para procesar cada Pokémon del inventario
+  defp preparar_pkm_json(p) do
+    %{
+      "id" => p.id,
+      "especie" => p.especie,
+      "rareza" => p.rareza,
+      "ataque" => p.ataque,
+      "defensa" => p.defensa,
+      "velocidad" => p.velocidad,
+      "dueño_original" => p.dueño_original,
+      "movimientos" => Enum.map(p.movimientos, fn m ->
+        %{
+          "nombre" => m.nombre,
+          "tipo" => m.tipo,
+          "poder_base" => m.poder_base
+        }
+      end)
+    }
+  end
 end

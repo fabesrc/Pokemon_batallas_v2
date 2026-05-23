@@ -11,16 +11,15 @@ defmodule PokemonBattle.GestorSalas do
   #  API
   def crear_sala(user, equipo), do: GenServer.call(__MODULE__, {:crear, user, equipo, self()})
   def unirse_sala(id, user, equipo) do
-    # Obtenemos todos los nodos (incluyendo el nuestro)
     nodos = [node() | Node.list()]
 
-    # Buscamos en cada nodo hasta que uno nos responda con exito
     Enum.find_value(nodos, {:error, "No existe esa sala en ningún nodo"}, fn n ->
       case :rpc.call(n, GenServer, :call, [__MODULE__, {:unirse, id, user, equipo, self()}]) do
         {:ok, res} -> {:ok, res}
-        {:error, "No existe esa sala"} -> false # Sigue buscando en el siguiente nodo
-        {:error, msg} -> {:error, msg}           
-        _ -> false
+        {:error, "No existe esa sala"} -> false
+        {:error, msg} -> {:error, msg}
+        # detectar problemas de red o cookies explícitamente
+        {:badrpc, razon} -> {:error, "Error de conexión con nodo #{n}: #{inspect(razon)}"}
       end
     end)
   end
@@ -60,18 +59,32 @@ defmodule PokemonBattle.GestorSalas do
     cond do
       is_nil(sala) ->
         {:reply, {:error, "No existe esa sala"}, state}
+
       sala.creador == user2 ->
         {:reply, {:error, "No juegues contigo mismo"}, state}
+
       true ->
         t2 = GestorEntrenadores.obtener(user2)
-        case chequear_equipo(t2, equipo2) do
-          {:error, msg} -> {:reply, {:error, msg}, state}
-          {:ok, pokes2} ->
-            # Mandar la batalla al nodo con menos gente
-            nodo = Cluster.nodo_menos_cargado()
-            nueva_batalla(sala, {user2, pid2, pokes2}, nodo)
 
-            {:reply, {:ok, id}, Map.delete(state, id)}
+        case chequear_equipo(t2, equipo2) do
+          {:error, msg} ->
+            {:reply, {:error, msg}, state}
+
+          {:ok, pokes2} ->
+            nodo = Cluster.nodo_menos_cargado()
+
+            # validamos el resultado de iniciar la batalla
+            case nueva_batalla(sala, {user2, pid2, pokes2}, nodo) do
+              {:ok, _pid} ->
+                # Solo si la batalla inició con éxito, borramos la sala
+                {:reply, {:ok, id}, Map.delete(state, id)}
+
+              {:error, razon} ->
+                {:reply, {:error, "Error al iniciar proceso de batalla: #{inspect(razon)}"}, state}
+
+              {:badrpc, razon} ->
+                {:reply, {:error, "Error de comunicación con el nodo #{nodo}: #{inspect(razon)}"}, state}
+            end
         end
     end
   end
@@ -94,17 +107,34 @@ defmodule PokemonBattle.GestorSalas do
 
   # Privadas
 
-  defp chequear_equipo(nil, _), do: {:error, "No existes"}
+  defp chequear_equipo(nil, _), do: {:error, "Entrenador no encontrado."}
   defp chequear_equipo(t, nom) do
-    ids = t.equipos[nom]
-    if is_nil(ids) or ids == [] do
-      {:error, "Equipo no valido"}
-    else
-      # Buscar los pokes en el inventario
-      pokes = Enum.map(ids, fn id -> Enum.find(t.inventario, &(&1.id == id)) end)
-              |> Enum.filter(& &1) # Quitar nils
+    ids_guardados = t.equipos[nom]
 
-      if pokes == [], do: {:error, "No tienes esos pokes"}, else: {:ok, pokes}
+    cond do
+      is_nil(ids_guardados) or ids_guardados == [] ->
+        {:error, "El equipo '#{nom}' no existe o no tiene Pokémon asignados."}
+
+      true ->
+        # objeto completo de cada Pokémon por su ID
+        busqueda = Enum.map(ids_guardados, fn id ->
+          {id, Enum.find(t.inventario, &(&1.id == id))}
+        end)
+
+        # IDs que resultaron en nil
+        faltantes =
+          busqueda
+          |> Enum.filter(fn {_id, pkm} -> is_nil(pkm) end)
+          |> Enum.map(fn {id, _pkm} -> id end)
+
+        if faltantes == [] do
+          pokes_objetos = Enum.map(busqueda, fn {_id, pkm} -> pkm end)
+          {:ok, pokes_objetos}
+        else
+          # rechazar e indicar cuáles pokemones faltan
+          ids_str = Enum.join(faltantes, ", ")
+          {:error, "Equipo inválido. Los Pokémon con ID [#{ids_str}] ya no están en tu inventario."}
+        end
     end
   end
 
@@ -118,9 +148,9 @@ defmodule PokemonBattle.GestorSalas do
 
     # Si es mi nodo, directo, de lo contrario rpc.
     if nodo == node() do
-      DynamicSupervisor.start_child(PokemonBattle.SupervisorBatallas, {Batalla, args})
+      DynamicSupervisor.start_child(PokemonBattle.SupBatallas, {Batalla, args})
     else
-      :rpc.call(nodo, DynamicSupervisor, :start_child, [PokemonBattle.SupervisorBatallas, {Batalla, args}])
+      :rpc.call(nodo, DynamicSupervisor, :start_child, [PokemonBattle.SupBatallas, {Batalla, args}])
     end
   end
 end

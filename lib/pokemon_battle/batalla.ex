@@ -43,14 +43,24 @@ defmodule PokemonBattle.Batalla do
 
   @impl true
   def handle_cast({:accion, user, act}, state) do
+    # evitar que un jugador mueva dos veces o mueva fuera de tiempo
     if state.status != :jugando or Map.has_key?(state.acts, user) do
       {:noreply, state}
     else
       new_acts = Map.put(state.acts, user, act)
+
       if map_size(new_acts) == 2 do
+        # Si ambos movieron, procesamos como siempre
         Process.cancel_timer(state.timer)
         {:noreply, procesar_turno(%{state | acts: new_acts})}
       else
+        # quién es el jugador actual y quién es el rival
+        {p_actual, p_rival} = j_y_rival(state, user)
+
+        send(p_actual.pid, {:batalla_evento, "Esperando a que #{p_rival.nombre} elija su movimiento..."})
+
+        send(p_rival.pid, {:batalla_evento, "¡#{user} ya está listo! Es tu turno."})
+
         {:noreply, %{state | acts: new_acts}}
       end
     end
@@ -167,17 +177,42 @@ defmodule PokemonBattle.Batalla do
 
   defp terminar(s, ganador) do
     aviso_ambos(s, "FIN: Ganador #{ganador}")
+
     if ganador != :empate do
+      # quien es el perdedor
+      perdedor = if s.j1.nombre == ganador, do: s.j2.nombre, else: s.j1.nombre
+
+      # recompensa ganador: +100
       GestorEntrenadores.sumar_victoria(ganador)
-      GestorEntrenadores.actualizar_monedas(ganador, 50)
+      GestorEntrenadores.actualizar_monedas(ganador, 100)
+
+      # recompensa perdedor: +30
+      GestorEntrenadores.actualizar_monedas(perdedor, 30)
+
+      # Registrar en el log
+      Persistencia.registrar_batalla(%{
+        jugador1: s.j1.nombre,
+        jugador2: s.j2.nombre,
+        ganador: ganador,
+        turnos: s.turno,
+        nodo: s.nodo
+      })
     end
+
     %{s | status: :fin}
   end
 
   # Helpers sucios
 
   defp crear_j({nom, pid, equipo}, tipos) do
-    %{nombre: nom, pid: pid, pokes: equipo, activo: 0, hp: Enum.map(equipo, &(&1.defensa * 2 + 50)), tipos: tipos}
+    %{
+      nombre: nom,
+      pid: pid,
+      pokes: equipo,
+      activo: 0,
+      hp: Enum.map(equipo, fn _ -> 100 end),
+      tipos: tipos
+    }
   end
 
   defp iniciar_timer, do: Process.send_after(self(), :timeout, @t_turno)
@@ -193,6 +228,17 @@ defmodule PokemonBattle.Batalla do
   end
 
   defp mostrar_opciones(s) do
-    aviso_ambos(s, "Turno #{s.turno}: Elige ataque (1, 2, 3...)")
+    p1 = Enum.at(s.j1.pokes, s.j1.activo)
+    p2 = Enum.at(s.j2.pokes, s.j2.activo)
+    hp1 = Enum.at(s.j1.hp, s.j1.activo)
+    hp2 = Enum.at(s.j2.hp, s.j2.activo)
+
+    msg = """
+    \n=== TURNO #{s.turno} ===
+    Rival: #{s.j2.nombre} | #{p2.especie} (HP: #{hp2}/100)
+    Tu Pokémon: #{p1.especie} (HP: #{hp1}/100)
+    Movimientos: 1.#{Enum.at(p1.movimientos, 0).nombre} 2.#{Enum.at(p1.movimientos, 1).nombre}...
+    """
+    aviso_ambos(s, msg)
   end
 end
