@@ -96,20 +96,33 @@ defmodule PokemonBattle.Intercambio do
   # Helpers
 
   defp hacer_cambio(s) do
-    # Quitar y poner
+    # obtener los objetos Pokémon completos antes de borrar
+    t1 = GestorEntrenadores.obtener(s.j1.nombre)
+    t2 = GestorEntrenadores.obtener(s.j2.nombre)
+
+    p1 = Enum.find(t1.inventario, &(&1.id == s.j1.ofrece))
+    p2 = Enum.find(t2.inventario, &(&1.id == s.j2.ofrece))
+
+    # ejecutar el intercambio en los inventarios
     GestorEntrenadores.quitar_pokemon(s.j1.nombre, s.j1.ofrece)
     GestorEntrenadores.quitar_pokemon(s.j2.nombre, s.j2.ofrece)
 
-    # Aquí deberías tener los objetos pokemon, simplifiquemos:
-    # (Para no parecer IA, no busques tanto objeto, solo el aviso)
+    GestorEntrenadores.agregar_pokemon(s.j1.nombre, p2)
+    GestorEntrenadores.agregar_pokemon(s.j2.nombre, p1)
 
-    msg = "¡Cambio hecho!"
-    send(s.j1.pid, {:intercambio_evento, msg})
-    send(s.j2.pid, {:intercambio_evento, msg})
+    msg = "¡Intercambio completado! Recibiste #{if p1.id == s.j1.ofrece, do: p2.especie, else: p1.especie}"
+    aviso_ambos_trade(s, msg)
+
     send(s.j1.pid, {:intercambio_completado, s.id})
     send(s.j2.pid, {:intercambio_completado, s.id})
 
     %{s | status: :fin}
+  end
+
+  # auxiliar para avisar a ambos en intercambio
+  defp aviso_ambos_trade(s, msg) do
+    send(s.j1.pid, {:intercambio_evento, msg})
+    send(s.j2.pid, {:intercambio_evento, msg})
   end
 
   defp get_j(s, nom), do: if(s.j1.nombre == nom, do: s.j1, else: s.j2)
