@@ -1,5 +1,6 @@
 [
   {
+    "clave": "1234",
     "equipos": {
       "equipo02": [
         458453,
@@ -12,109 +13,202 @@
         818771
       ]
     },
-    "clave": "1234",
     "inventario": [
       {
-        "id": 458453,
         "ataque": 51,
         "defensa": 23,
         "dueño_original": "ana",
         "especie": "jigglypuff",
+        "id": 458453,
         "movimientos": [
           {
-            "tipo": "Normal",
             "nombre": "golpe_cabeza",
-            "poder_base": 70
+            "poder_base": 70,
+            "tipo": "Normal"
           },
           {
-            "tipo": "Normal",
             "nombre": "ataque_rapido",
-            "poder_base": 40
+            "poder_base": 40,
+            "tipo": "Normal"
           },
           {
-            "tipo": "Volador",
             "nombre": "rafaga",
-            "poder_base": 60
+            "poder_base": 60,
+            "tipo": "Volador"
           },
           {
-            "tipo": "Tierra",
             "nombre": "fuerza_telur",
-            "poder_base": 90
+            "poder_base": 90,
+            "tipo": "Tierra"
           }
         ],
         "rareza": "raro",
         "velocidad": 23
       },
       {
-        "id": 764850,
         "ataque": 60,
         "defensa": 55,
         "dueño_original": "ana",
         "especie": "psyduck",
+        "id": 764850,
         "movimientos": [
           {
-            "tipo": "Agua",
             "nombre": "hidrobomba",
-            "poder_base": 110
+            "poder_base": 110,
+            "tipo": "Agua"
           },
           {
-            "tipo": "Agua",
             "nombre": "acua_jet",
-            "poder_base": 40
+            "poder_base": 40,
+            "tipo": "Agua"
           },
           {
-            "tipo": "Roca",
             "nombre": "pedrada",
-            "poder_base": 50
+            "poder_base": 50,
+            "tipo": "Roca"
           },
           {
-            "tipo": "Volador",
             "nombre": "ataque_ala",
-            "poder_base": 60
+            "poder_base": 60,
+            "tipo": "Volador"
           }
         ],
         "rareza": "raro",
         "velocidad": 63
       },
       {
-        "id": 818771,
         "ataque": 48,
         "defensa": 95,
         "dueño_original": "ana",
         "especie": "magnemite",
+        "id": 818771,
         "movimientos": [
           {
-            "tipo": "Eléctrico",
             "nombre": "onda_trueno",
-            "poder_base": 40
+            "poder_base": 40,
+            "tipo": "Eléctrico"
           },
           {
-            "tipo": "Eléctrico",
             "nombre": "chispa",
-            "poder_base": 50
+            "poder_base": 50,
+            "tipo": "Eléctrico"
           },
           {
-            "tipo": "Agua",
             "nombre": "rayo_burbuja",
-            "poder_base": 65
+            "poder_base": 65,
+            "tipo": "Agua"
           },
           {
-            "tipo": "Agua",
             "nombre": "pistola_agua",
-            "poder_base": 40
+            "poder_base": 40,
+            "tipo": "Agua"
           }
         ],
         "rareza": "epico",
         "velocidad": 61
+      },
+      {
+        "ataque": 47,
+        "defensa": 58,
+        "dueño_original": "ana",
+        "especie": "seel",
+        "id": 888587,
+        "movimientos": [
+          {
+            "nombre": "canto_helado",
+            "poder_base": 55,
+            "tipo": "Hielo"
+          },
+          {
+            "nombre": "ventisca",
+            "poder_base": 110,
+            "tipo": "Hielo"
+          },
+          {
+            "nombre": "aire_afilado",
+            "poder_base": 75,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "vuelo",
+            "poder_base": 90,
+            "tipo": "Volador"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 47
+      },
+      {
+        "ataque": 89,
+        "defensa": 111,
+        "dueño_original": "ana",
+        "especie": "geodude",
+        "id": 561746,
+        "movimientos": [
+          {
+            "nombre": "tierra_viva",
+            "poder_base": 60,
+            "tipo": "Tierra"
+          },
+          {
+            "nombre": "fuerza_telur",
+            "poder_base": 90,
+            "tipo": "Tierra"
+          },
+          {
+            "nombre": "picotazo",
+            "poder_base": 35,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "rayo_solar",
+            "poder_base": 120,
+            "tipo": "Planta"
+          }
+        ],
+        "rareza": "raro",
+        "velocidad": 22
+      },
+      {
+        "ataque": 74,
+        "defensa": 85,
+        "dueño_original": "ana",
+        "especie": "dewgong",
+        "id": 843507,
+        "movimientos": [
+          {
+            "nombre": "surf",
+            "poder_base": 90,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "avalancha_hielo",
+            "poder_base": 60,
+            "tipo": "Hielo"
+          },
+          {
+            "nombre": "hoja_afilada",
+            "poder_base": 55,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "golpe_cabeza",
+            "poder_base": 70,
+            "tipo": "Normal"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 74
       }
     ],
-    "monedas_actuales": 0,
+    "monedas_actuales": 900,
     "monedas_acumuladas": 0,
     "sobres_pendientes": [],
     "usuario": "ana",
     "victorias": 0
   },
   {
+    "clave": "1234",
     "equipos": {
       "equipo04": [
         393873,
@@ -127,96 +221,95 @@
         313792
       ]
     },
-    "clave": "1234",
     "inventario": [
       {
-        "id": 393873,
         "ataque": 58,
         "defensa": 42,
         "dueño_original": "fabes",
         "especie": "pikachu",
+        "id": 393873,
         "movimientos": [
           {
-            "tipo": "Eléctrico",
             "nombre": "voltio_cruel",
-            "poder_base": 80
+            "poder_base": 80,
+            "tipo": "Eléctrico"
           },
           {
-            "tipo": "Eléctrico",
             "nombre": "onda_trueno",
-            "poder_base": 40
+            "poder_base": 40,
+            "tipo": "Eléctrico"
           },
           {
-            "tipo": "Agua",
             "nombre": "cascada",
-            "poder_base": 80
+            "poder_base": 80,
+            "tipo": "Agua"
           },
           {
-            "tipo": "Fuego",
             "nombre": "llamarada",
-            "poder_base": 90
+            "poder_base": 90,
+            "tipo": "Fuego"
           }
         ],
         "rareza": "comun",
         "velocidad": 95
       },
       {
-        "id": 582293,
         "ataque": 47,
         "defensa": 50,
         "dueño_original": "fabes",
         "especie": "clefairy",
+        "id": 582293,
         "movimientos": [
           {
-            "tipo": "Normal",
             "nombre": "corte",
-            "poder_base": 50
+            "poder_base": 50,
+            "tipo": "Normal"
           },
           {
-            "tipo": "Normal",
             "nombre": "destructor",
-            "poder_base": 150
+            "poder_base": 150,
+            "tipo": "Normal"
           },
           {
-            "tipo": "Fuego",
             "nombre": "ascuas",
-            "poder_base": 30
+            "poder_base": 30,
+            "tipo": "Fuego"
           },
           {
-            "tipo": "Bicho",
             "nombre": "zumbido",
-            "poder_base": 40
+            "poder_base": 40,
+            "tipo": "Bicho"
           }
         ],
         "rareza": "comun",
         "velocidad": 36
       },
       {
-        "id": 313792,
         "ataque": 52,
         "defensa": 57,
         "dueño_original": "fabes",
         "especie": "oddish",
+        "id": 313792,
         "movimientos": [
           {
-            "tipo": "Planta",
             "nombre": "bomba_germen",
-            "poder_base": 80
+            "poder_base": 80,
+            "tipo": "Planta"
           },
           {
-            "tipo": "Planta",
             "nombre": "rayo_solar",
-            "poder_base": 120
+            "poder_base": 120,
+            "tipo": "Planta"
           },
           {
-            "tipo": "Normal",
             "nombre": "placaje",
-            "poder_base": 35
+            "poder_base": 35,
+            "tipo": "Normal"
           },
           {
-            "tipo": "Volador",
             "nombre": "acrobata",
-            "poder_base": 55
+            "poder_base": 55,
+            "tipo": "Volador"
           }
         ],
         "rareza": "comun",

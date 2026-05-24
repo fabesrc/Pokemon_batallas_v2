@@ -5,7 +5,9 @@ defmodule PokemonBattle.GestorEntrenadores do
   def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   # API
-  def iniciar_sesion(user, pass), do: GenServer.call(__MODULE__, {:login, user, pass, self()})
+  def iniciar_sesion_con_pid(user, pass, pid_externo) do
+    GenServer.call(__MODULE__, {:login, user, pass, pid_externo})
+  end
   def cerrar_sesion(user), do: GenServer.call(__MODULE__, {:logout, user, self()})
   def esta_en_sesion?(user), do: GenServer.call(__MODULE__, {:esta_on, user})
   def pid_sesion(user), do: GenServer.call(__MODULE__, {:get_pid, user})
