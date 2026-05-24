@@ -9,7 +9,8 @@ defmodule PokemonBattle.Servidor do
     sala: nil,
     batalla: nil,
     trade: nil,
-    esperando_cambio: false  # control de flujo
+    esperando_cambio: false,
+    equipo_ids: []
   ]
 
   def iniciar_sesion do
@@ -58,6 +59,9 @@ defmodule PokemonBattle.Servidor do
       {:batalla_terminada, %{ganador: g}} ->
         IO.puts("\n*** BATALLA TERMINADA. GANÓ: #{g} ***")
         %{state | batalla: nil, sala: nil, esperando_cambio: false}
+
+      {:sync_batalla, :esperando_cambio, val} ->
+        revisar_buzon(%{state | esperando_cambio: val})
 
       {:intercambio_evento, msg} ->
         IO.puts("\n[TRADE] #{msg}")
@@ -109,9 +113,12 @@ defmodule PokemonBattle.Servidor do
 
   # Login
   defp ejecutar("login", [u, p], s) do
-    case GestorEntrenadores.iniciar_sesion(u, p) do
+    shell_pid = self()
+    pid_escuchador = spawn(fn -> escuchador_mensajes(shell_pid) end)
+
+    case PokemonBattle.GestorEntrenadores.iniciar_sesion_con_pid(u, p, pid_escuchador) do
       {:ok, _, _} ->
-        IO.puts("Hola #{u}!")
+        IO.puts("Hola #{u}! (Escuchador activo)")
         {:ok, %{s | user: u}}
       {:error, e} -> {:error, e, s}
     end
@@ -148,8 +155,16 @@ defmodule PokemonBattle.Servidor do
   defp ejecutar("abrir", _, s) do
     case SistemaSobres.abrir_sobre(s.user, "ultimo") do
       {:ok, pokes} ->
-        IO.puts("¡Te salieron!")
-        Enum.each(pokes, &IO.puts("- #{&1.especie}"))
+        IO.puts("\n¡Sobre abierto! Obtuviste:")
+        Enum.each(pokes, fn p ->
+          movs_str = Enum.map(p.movimientos, &("#{&1.nombre}(#{&1.poder_base})")) |> Enum.join(", ")
+
+          IO.puts("""
+          [##{p.id}] #{p.especie} [#{p.rareza}] - Dueño original: #{p.dueño_original}
+          Stats -> Atk: #{p.ataque} | Def: #{p.defensa} | Vel: #{p.velocidad}
+          Movimientos: #{movs_str}
+          """)
+        end)
         {:ok, s}
       {:error, e} -> {:error, e, s}
     end
@@ -170,8 +185,11 @@ defmodule PokemonBattle.Servidor do
   defp ejecutar("crear_sala", [equipo], s) do
     case GestorSalas.crear_sala(s.user, equipo) do
       {:ok, id} ->
+        t = GestorEntrenadores.obtener(s.user)
+        ids_del_equipo = t.equipos[equipo]
+
         IO.puts("Sala #{id} creada.");
-        {:ok, %{s | sala: id, batalla: id}}
+        {:ok, %{s | sala: id, batalla: id, equipo_ids: ids_del_equipo}}
       {:error, e} -> {:error, e, s}
     end
   end
@@ -182,10 +200,12 @@ defmodule PokemonBattle.Servidor do
 
     case GestorSalas.unirse_sala(id, s.user, equipo) do
       {:ok, _} ->
+        t = GestorEntrenadores.obtener(s.user)
+        ids_del_equipo = t.equipos[equipo]
+
         IO.puts("¡Te has unido a la sala #{id}!")
-        {:ok, %{s | batalla: id}}
-      {:error, e} ->
-        {:error, e, s}
+        {:ok, %{s | batalla: id, equipo_ids: ids_del_equipo}}
+      {:error, e} -> {:error, e, s}
     end
   end
 
@@ -193,11 +213,10 @@ defmodule PokemonBattle.Servidor do
     cond do
       is_nil(s.batalla) ->
         {:error, "No estás en una batalla activa", s}
-
       s.esperando_cambio ->
-        {:error, "Tu Pokémon está debilitado, debes usar el comando 'cambiar <id_pkm>' primero", s}
-
+        {:error, "Tu Pokémon está debilitado, debes usar el comando 'cambiar <id_pkm>'", s}
       true ->
+        IO.puts("[SISTEMA] Enviando orden de ataque ##{n}...")
         PokemonBattle.Batalla.accion(s.batalla, s.user, n)
         {:ok, s}
     end
@@ -240,23 +259,52 @@ defmodule PokemonBattle.Servidor do
   defp ejecutar("cambiar", [id_str], s) do
     if s.batalla do
       id_buscado = String.to_integer(id_str)
-      t = GestorEntrenadores.obtener(s.user)
 
-      idx = Enum.find_index(t.inventario, &(&1.id == id_buscado))
+      idx = Enum.find_index(s.equipo_ids, &(&1 == id_buscado))
 
       if idx do
         PokemonBattle.Batalla.cambiar_pokemon(s.batalla, s.user, idx)
         {:ok, %{s | esperando_cambio: false}}
       else
-        {:error, "Ese Pokémon no está en tu inventario", s}
+        {:error, "Ese Pokémon no es parte del equipo que llevaste a esta batalla", s}
       end
     else
       {:error, "No estás en una batalla activa", s}
     end
   end
 
+
   # Fallback
   defp ejecutar(cmd, _, s), do: {:error, "Comando '#{cmd}' no existe", s}
+
+
+  defp escuchador_mensajes(shell_pid) do
+    receive do
+      {:batalla_evento, msg} ->
+        IO.puts("\n[BATALLA] #{msg}")
+        cond do
+          String.contains?(msg, "Esperando cambios de pokemon") ->
+            send(shell_pid, {:sync_batalla, :esperando_cambio, true})
+          String.contains?(msg, "=== TURNO") ->
+            send(shell_pid, {:sync_batalla, :esperando_cambio, false})
+          true ->
+            :ok
+        end
+        escuchador_mensajes(shell_pid)
+
+      {:batalla_terminada, %{ganador: g} = info} ->
+        IO.puts("\n*** BATALLA TERMINADA. GANÓ: #{g} ***")
+        send(shell_pid, {:batalla_terminada, info})
+        escuchador_mensajes(shell_pid)
+
+      {:intercambio_evento, msg} ->
+        IO.puts("\n[TRADE] #{msg}")
+        escuchador_mensajes(shell_pid)
+
+      _ ->
+        escuchador_mensajes(shell_pid)
+    end
+  end
 
   defp mostrar_ayuda(s) do
     IO.puts("""

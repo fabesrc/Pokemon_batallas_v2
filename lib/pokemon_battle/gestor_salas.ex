@@ -9,12 +9,17 @@ defmodule PokemonBattle.GestorSalas do
   end
 
   #  API
-  def crear_sala(user, equipo), do: GenServer.call(__MODULE__, {:crear, user, equipo, self()})
+  def crear_sala(user, equipo) do
+    pid = GestorEntrenadores.pid_sesion(user) || self()
+    GenServer.call(__MODULE__, {:crear, user, equipo, pid})
+  end
+
   def unirse_sala(id, user, equipo) do
+    pid = GestorEntrenadores.pid_sesion(user) || self()
     nodos = [node() | Node.list()]
 
     Enum.find_value(nodos, {:error, "No existe esa sala en ningún nodo"}, fn n ->
-      case :rpc.call(n, GenServer, :call, [__MODULE__, {:unirse, id, user, equipo, self()}]) do
+      case :rpc.call(n, GenServer, :call, [__MODULE__, {:unirse, id, user, equipo, pid}]) do
         {:ok, res} -> {:ok, res}
         {:error, "No existe esa sala"} -> false
         {:error, msg} -> {:error, msg}

@@ -40,25 +40,29 @@ defmodule PokemonBattle.Intercambio do
     trainer = GestorEntrenadores.obtener(nombre)
     tiene = Enum.find(trainer.inventario, &(&1.id == pokemon_id))
 
+    en_equipo = Enum.any?(trainer.equipos, fn {_nom, ids} -> pokemon_id in ids end)
+
     case {state.status, tiene} do
       {:cancelado, _} ->
-        {:reply, {:error, "Cancelado"}, state}
+        {:reply, {:error, "Intercambio cancelado"}, state}
       {_, nil} ->
-        {:reply, {:error, "No tienes ese pokemon"}, state}
+        {:reply, {:error, "No tienes ese Pokémon en tu inventario"}, state}
       _ ->
-        # actualizar el que ofrece
-        nuevo_j = %{get_j(state, nombre) | ofrece: pokemon_id, ok: false}
-        new_state = set_j(state, nuevo_j)
-
-        aviso(new_state, "Ofreciste a #{tiene.especie}")
-        aviso_al_otro(new_state, nombre, "#{nombre} ofrece algo...")
-
-        # revisar si ya los dos pusieron algo
-        if new_state.j1.ofrece && new_state.j2.ofrece do
-          mostrar_todo(new_state)
-          {:reply, :ok, %{new_state | status: :confirmando}}
+        if en_equipo do
+          {:reply, {:error, "No puedes ofrecer un Pokémon que pertenece a un equipo activo"}, state}
         else
-          {:reply, :ok, new_state}
+          nuevo_j = %{get_j(state, nombre) | ofrece: pokemon_id, ok: false}
+          new_state = set_j(state, nuevo_j)
+
+          aviso(new_state, "Ofreciste a #{tiene.especie}")
+          aviso_al_otro(new_state, nombre, "#{nombre} ofrece algo...")
+
+          if new_state.j1.ofrece && new_state.j2.ofrece do
+            mostrar_todo(new_state)
+            {:reply, :ok, %{new_state | status: :confirmando}}
+          else
+            {:reply, :ok, new_state}
+          end
         end
     end
   end

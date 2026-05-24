@@ -54,12 +54,14 @@ defmodule PokemonBattle.Batalla do
         Process.cancel_timer(state.timer)
         {:noreply, procesar_turno(%{state | acts: new_acts})}
       else
-        # quién es el jugador actual y quién es el rival
+        new_acts = Map.put(state.acts, user, act)
         {p_actual, p_rival} = j_y_rival(state, user)
 
-        send(p_actual.pid, {:batalla_evento, "Esperando a que #{p_rival.nombre} elija su movimiento..."})
+        # [MEJORA] Mensaje para el que ya movió
+        send(p_actual.pid, {:batalla_evento, "Orden recibida. Esperando a que #{p_rival.nombre} elija su movimiento..."})
 
-        send(p_rival.pid, {:batalla_evento, "¡#{user} ya está listo! Es tu turno."})
+        # [MEJORA] Mensaje para el que falta por mover (presión)
+        send(p_rival.pid, {:batalla_evento, "¡#{user} ya envió su ataque! El turno se resolverá en cuanto tú elijas."})
 
         {:noreply, %{state | acts: new_acts}}
       end
@@ -126,24 +128,19 @@ defmodule PokemonBattle.Batalla do
       {num, _} -> num - 1
       :error -> 0
     end
-
     mov = Enum.at(p_atk.movimientos, mov_idx) || hd(p_atk.movimientos)
 
-
-    dano = MotorCombate.calcular_dano(
-      mov,
-      p_atk,
-      p_def,
-      atk.tipos[p_atk.especie],
-      defen.tipos[p_def.especie]
-    )
-
-    # aplicar daño al hp
+    dano = MotorCombate.calcular_dano(mov, p_atk, p_def, atk.tipos[p_atk.especie], defen.tipos[p_def.especie])
     nueva_hp = max(0, Enum.at(defen.hp, defen.activo) - dano)
     defen = %{defen | hp: List.replace_at(defen.hp, defen.activo, nueva_hp)}
 
-    aviso_ambos(s, "#{nom_atk}: #{mov.nombre} hizo #{dano} de daño")
-    if nueva_hp == 0, do: aviso_ambos(s, "#{p_def.especie} de #{defen.nombre} se debilitó")
+    # [NUEVO] mensaje personalizado para que cada uno sepa qué pasó
+    send(atk.pid, {:batalla_evento, "¡Tu #{p_atk.especie} usó #{mov.nombre} e hizo #{dano} de daño!"})
+    send(defen.pid, {:batalla_evento, "¡El #{p_atk.especie} de #{nom_atk} usó #{mov.nombre} y te quitó #{dano} HP!"})
+
+    if nueva_hp == 0 do
+      aviso_ambos(s, "¡El #{p_def.especie} de #{defen.nombre} se ha debilitado!")
+    end
 
     set_j(s, defen)
   end
@@ -177,6 +174,8 @@ defmodule PokemonBattle.Batalla do
 
   defp terminar(s, ganador) do
     aviso_ambos(s, "FIN: Ganador #{ganador}")
+    send(s.j1.pid, {:batalla_terminada, %{ganador: ganador, sala_id: s.id}})
+    send(s.j2.pid, {:batalla_terminada, %{ganador: ganador, sala_id: s.id}})
 
     if ganador != :empate do
       # quien es el perdedor
@@ -228,17 +227,21 @@ defmodule PokemonBattle.Batalla do
   end
 
   defp mostrar_opciones(s) do
-    p1 = Enum.at(s.j1.pokes, s.j1.activo)
-    p2 = Enum.at(s.j2.pokes, s.j2.activo)
-    hp1 = Enum.at(s.j1.hp, s.j1.activo)
-    hp2 = Enum.at(s.j2.hp, s.j2.activo)
+    Enum.each([s.j1, s.j2], fn j ->
+      rival = if j.nombre == s.j1.nombre, do: s.j2, else: s.j1
 
-    msg = """
-    \n=== TURNO #{s.turno} ===
-    Rival: #{s.j2.nombre} | #{p2.especie} (HP: #{hp2}/100)
-    Tu Pokémon: #{p1.especie} (HP: #{hp1}/100)
-    Movimientos: 1.#{Enum.at(p1.movimientos, 0).nombre} 2.#{Enum.at(p1.movimientos, 1).nombre}...
-    """
-    aviso_ambos(s, msg)
+      p_mio = Enum.at(j.pokes, j.activo)
+      p_riv = Enum.at(rival.pokes, rival.activo)
+      hp_mio = Enum.at(j.hp, j.activo)
+      hp_riv = Enum.at(rival.hp, rival.activo)
+
+      msg = """
+      \n=== TURNO #{s.turno} ===
+      Rival: #{rival.nombre} | #{p_riv.especie} (HP: #{hp_riv}/100)
+      Tu Pokémon: #{p_mio.especie} (HP: #{hp_mio}/100)
+      Movimientos: 1.#{Enum.at(p_mio.movimientos, 0).nombre} 2.#{Enum.at(p_mio.movimientos, 1).nombre} 3.#{Enum.at(p_mio.movimientos, 2).nombre} 4.#{Enum.at(p_mio.movimientos, 3).nombre}
+      """
+      send(j.pid, {:batalla_evento, msg})
+    end)
   end
 end
