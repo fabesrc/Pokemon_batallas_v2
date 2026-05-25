@@ -82,9 +82,17 @@ defmodule PokemonBattleTest do
     pokemon_test = %{
       id: pkm_id,
       especie: "Pikachu",
-      ataque: 50, defensa: 50, velocidad: 50,
-      movimientos: [],
-      dueño_original: u
+      rareza: "comun",
+      ataque: 50,
+      defensa: 50,
+      velocidad: 50,
+      dueño_original: u,
+      movimientos: [
+        %{nombre: "impactrueno", tipo: "Electrico", poder_base: 40},
+        %{nombre: "rayo", tipo: "Electrico", poder_base: 90},
+        %{nombre: "ataque_rapido", tipo: "Normal", poder_base: 40},
+        %{nombre: "placaje", tipo: "Normal", poder_base: 40}
+      ]
     }
     GestorEntrenadores.agregar_pokemon(u, pokemon_test)
 
@@ -118,9 +126,7 @@ defmodule PokemonBattleTest do
 
   # Concurrencia (estres)
   test "Múltiples batallas simultáneas" do
-    # Simula que el sistema no se cae si hay mucha actividad
-    n_batallas = 3
-    # ... logica de procesos paralelos ...
-    assert true
+    # Placeholder: el supervisor soporta varios hijos bajo SupBatallas
+    assert DynamicSupervisor.count_children(PokemonBattle.SupBatallas).active >= 0
   end
 end

@@ -1,5 +1,439 @@
 [
   {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [
+      {
+        "ataque": 42,
+        "defensa": 41,
+        "dueño_original": "test_759855",
+        "especie": "vulpix",
+        "id": 768109,
+        "movimientos": [
+          {
+            "nombre": "llamarada",
+            "poder_base": 90,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "ascuas",
+            "poder_base": 30,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "energia_bola",
+            "poder_base": 80,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "destructor",
+            "poder_base": 150,
+            "tipo": "Normal"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 67
+      },
+      {
+        "ataque": 40,
+        "defensa": 47,
+        "dueño_original": "test_759855",
+        "especie": "caterpie",
+        "id": 563058,
+        "movimientos": [
+          {
+            "nombre": "tijera_x",
+            "poder_base": 80,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "megacuerno",
+            "poder_base": 120,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "colmillo_hielo",
+            "poder_base": 65,
+            "tipo": "Hielo"
+          },
+          {
+            "nombre": "pistola_agua",
+            "poder_base": 40,
+            "tipo": "Agua"
+          }
+        ],
+        "rareza": "epico",
+        "velocidad": 60
+      },
+      {
+        "ataque": 43,
+        "defensa": 42,
+        "dueño_original": "test_759855",
+        "especie": "vulpix",
+        "id": 995249,
+        "movimientos": [
+          {
+            "nombre": "lanzallamas",
+            "poder_base": 90,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "llamarada",
+            "poder_base": 90,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "rafaga",
+            "poder_base": 60,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "avalancha",
+            "poder_base": 60,
+            "tipo": "Roca"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 68
+      }
+    ],
+    "monedas_actuales": 400,
+    "monedas_acumuladas": 500,
+    "sobres_pendientes": [
+      {
+        "id": 986112,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_759855",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 865154,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_758424",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 164779,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_522022",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {
+      "e1": [
+        123456
+      ]
+    },
+    "inventario": [
+      {
+        "ataque": 50,
+        "defensa": 50,
+        "dueño_original": "test_618766",
+        "especie": "Pikachu",
+        "id": 123456,
+        "movimientos": [
+          {
+            "nombre": "impactrueno",
+            "poder_base": 40,
+            "tipo": "Electrico"
+          },
+          {
+            "nombre": "rayo",
+            "poder_base": 90,
+            "tipo": "Electrico"
+          },
+          {
+            "nombre": "ataque_rapido",
+            "poder_base": 40,
+            "tipo": "Normal"
+          },
+          {
+            "nombre": "placaje",
+            "poder_base": 40,
+            "tipo": "Normal"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 50
+      }
+    ],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 492600,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_618766",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 71423,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_991571",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 13335,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_848289",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 898534,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_887972",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 218514,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_663489",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 200,
+    "sobres_pendientes": [
+      {
+        "id": 409602,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_558624",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 987866,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_348657",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 123344,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_40163",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 438009,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_77564",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [
+      {
+        "ataque": 81,
+        "defensa": 92,
+        "dueño_original": "test_380594",
+        "especie": "sandshrew",
+        "id": 150935,
+        "movimientos": [
+          {
+            "nombre": "fuerza_telur",
+            "poder_base": 90,
+            "tipo": "Tierra"
+          },
+          {
+            "nombre": "tierra_viva",
+            "poder_base": 60,
+            "tipo": "Tierra"
+          },
+          {
+            "nombre": "rafaga",
+            "poder_base": 60,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "energia_bola",
+            "poder_base": 80,
+            "tipo": "Planta"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 43
+      },
+      {
+        "ataque": 94,
+        "defensa": 118,
+        "dueño_original": "test_380594",
+        "especie": "geodude",
+        "id": 128033,
+        "movimientos": [
+          {
+            "nombre": "tierra_viva",
+            "poder_base": 60,
+            "tipo": "Tierra"
+          },
+          {
+            "nombre": "poder_pasado",
+            "poder_base": 60,
+            "tipo": "Roca"
+          },
+          {
+            "nombre": "nitrocarga",
+            "poder_base": 30,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "llamarada",
+            "poder_base": 90,
+            "tipo": "Fuego"
+          }
+        ],
+        "rareza": "raro",
+        "velocidad": 24
+      },
+      {
+        "ataque": 118,
+        "defensa": 85,
+        "dueño_original": "test_380594",
+        "especie": "fearow",
+        "id": 227963,
+        "movimientos": [
+          {
+            "nombre": "acrobata",
+            "poder_base": 55,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "ataque_ala",
+            "poder_base": 60,
+            "tipo": "Volador"
+          },
+          {
+            "nombre": "tumba_rocas",
+            "poder_base": 28,
+            "tipo": "Roca"
+          },
+          {
+            "nombre": "pin_misil",
+            "poder_base": 25,
+            "tipo": "Bicho"
+          }
+        ],
+        "rareza": "epico",
+        "velocidad": 131
+      }
+    ],
+    "monedas_actuales": 400,
+    "monedas_acumuladas": 500,
+    "sobres_pendientes": [
+      {
+        "id": 39503,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_380594",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 680396,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_132869",
+    "victorias": 0
+  },
+  {
     "clave": "1234",
     "equipos": {
       "equipo02": [
@@ -201,26 +635,415 @@
         "velocidad": 74
       }
     ],
-    "monedas_actuales": 900,
-    "monedas_acumuladas": 0,
+    "monedas_actuales": 960,
+    "monedas_acumuladas": 60,
     "sobres_pendientes": [],
     "usuario": "ana",
     "victorias": 0
   },
   {
-    "clave": "1234",
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 918576,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_860367",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 525854,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_255113",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 271350,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_736640",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 386621,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_4253",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 422867,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_417082",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [
+      {
+        "ataque": 79,
+        "defensa": 89,
+        "dueño_original": "test_747838",
+        "especie": "sandshrew",
+        "id": 786634,
+        "movimientos": [
+          {
+            "nombre": "terremoto",
+            "poder_base": 100,
+            "tipo": "Tierra"
+          },
+          {
+            "nombre": "tierra_viva",
+            "poder_base": 60,
+            "tipo": "Tierra"
+          },
+          {
+            "nombre": "roca_afilada",
+            "poder_base": 100,
+            "tipo": "Roca"
+          },
+          {
+            "nombre": "zumbido",
+            "poder_base": 40,
+            "tipo": "Bicho"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 42
+      },
+      {
+        "ataque": 54,
+        "defensa": 49,
+        "dueño_original": "test_747838",
+        "especie": "psyduck",
+        "id": 122976,
+        "movimientos": [
+          {
+            "nombre": "cascada",
+            "poder_base": 80,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "rayo_burbuja",
+            "poder_base": 65,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "ventisca",
+            "poder_base": 110,
+            "tipo": "Hielo"
+          },
+          {
+            "nombre": "onda_trueno",
+            "poder_base": 40,
+            "tipo": "Eléctrico"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 57
+      },
+      {
+        "ataque": 52,
+        "defensa": 52,
+        "dueño_original": "test_747838",
+        "especie": "bulbasaur",
+        "id": 561431,
+        "movimientos": [
+          {
+            "nombre": "hoja_afilada",
+            "poder_base": 55,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "latigo_cepa",
+            "poder_base": 45,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "impactrueno",
+            "poder_base": 65,
+            "tipo": "Eléctrico"
+          },
+          {
+            "nombre": "hueso_palo",
+            "poder_base": 65,
+            "tipo": "Tierra"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 48
+      }
+    ],
+    "monedas_actuales": 400,
+    "monedas_acumuladas": 500,
+    "sobres_pendientes": [
+      {
+        "id": 100844,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_747838",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 878737,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_69030",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 413622,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_298169",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
     "equipos": {
-      "equipo04": [
-        393873,
-        582293,
-        313792
-      ],
-      "mi_equipo": [
-        393873,
-        582293,
-        313792
+      "e1": [
+        123456
       ]
     },
+    "inventario": [
+      {
+        "ataque": 50,
+        "defensa": 50,
+        "dueño_original": "test_553408",
+        "especie": "Pikachu",
+        "id": 123456,
+        "movimientos": [
+          {
+            "nombre": "impactrueno",
+            "poder_base": 40,
+            "tipo": "Electrico"
+          },
+          {
+            "nombre": "rayo",
+            "poder_base": 90,
+            "tipo": "Electrico"
+          },
+          {
+            "nombre": "ataque_rapido",
+            "poder_base": 40,
+            "tipo": "Normal"
+          },
+          {
+            "nombre": "placaje",
+            "poder_base": 40,
+            "tipo": "Normal"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 50
+      }
+    ],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 493117,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_553408",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 200,
+    "sobres_pendientes": [
+      {
+        "id": 67816,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_44955",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 739043,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_355014",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 830996,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_895179",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 72098,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_77308",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 52242,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_597978",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 448074,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_500517",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 451406,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_13270",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 606337,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_151454",
+    "victorias": 0
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 200,
+    "sobres_pendientes": [
+      {
+        "id": 182805,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_858899",
+    "victorias": 0
+  },
+  {
+    "clave": "1234",
+    "equipos": {},
     "inventario": [
       {
         "ataque": 58,
@@ -285,41 +1108,149 @@
         "velocidad": 36
       },
       {
-        "ataque": 52,
-        "defensa": 57,
-        "dueño_original": "fabes",
-        "especie": "oddish",
-        "id": 313792,
+        "ataque": 74,
+        "defensa": 85,
+        "dueño_original": "ana",
+        "especie": "dewgong",
+        "id": 843507,
         "movimientos": [
           {
-            "nombre": "bomba_germen",
-            "poder_base": 80,
-            "tipo": "Planta"
+            "nombre": "surf",
+            "poder_base": 90,
+            "tipo": "Agua"
           },
           {
-            "nombre": "rayo_solar",
-            "poder_base": 120,
-            "tipo": "Planta"
+            "nombre": "avalancha_hielo",
+            "poder_base": 60,
+            "tipo": "Hielo"
           },
           {
-            "nombre": "placaje",
-            "poder_base": 35,
-            "tipo": "Normal"
-          },
-          {
-            "nombre": "acrobata",
+            "nombre": "hoja_afilada",
             "poder_base": 55,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "golpe_cabeza",
+            "poder_base": 70,
+            "tipo": "Normal"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 74
+      },
+      {
+        "ataque": 78,
+        "defensa": 90,
+        "dueño_original": "fabes",
+        "especie": "dewgong",
+        "id": 871266,
+        "movimientos": [
+          {
+            "nombre": "rayo_burbuja",
+            "poder_base": 65,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "cascada",
+            "poder_base": 80,
+            "tipo": "Agua"
+          },
+          {
+            "nombre": "drenadoras",
+            "poder_base": 20,
+            "tipo": "Planta"
+          },
+          {
+            "nombre": "megacuerno",
+            "poder_base": 120,
+            "tipo": "Bicho"
+          }
+        ],
+        "rareza": "raro",
+        "velocidad": 78
+      },
+      {
+        "ataque": 53,
+        "defensa": 44,
+        "dueño_original": "fabes",
+        "especie": "charmander",
+        "id": 666297,
+        "movimientos": [
+          {
+            "nombre": "llamarada",
+            "poder_base": 90,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "colmillo_igneo",
+            "poder_base": 65,
+            "tipo": "Fuego"
+          },
+          {
+            "nombre": "zumbido",
+            "poder_base": 40,
+            "tipo": "Bicho"
+          },
+          {
+            "nombre": "rafaga",
+            "poder_base": 60,
             "tipo": "Volador"
           }
         ],
         "rareza": "comun",
-        "velocidad": 31
+        "velocidad": 66
+      },
+      {
+        "ataque": 47,
+        "defensa": 21,
+        "dueño_original": "fabes",
+        "especie": "jigglypuff",
+        "id": 739930,
+        "movimientos": [
+          {
+            "nombre": "rapidez",
+            "poder_base": 30,
+            "tipo": "Normal"
+          },
+          {
+            "nombre": "golpe_cabeza",
+            "poder_base": 70,
+            "tipo": "Normal"
+          },
+          {
+            "nombre": "colmillo_hielo",
+            "poder_base": 65,
+            "tipo": "Hielo"
+          },
+          {
+            "nombre": "picadura",
+            "poder_base": 32,
+            "tipo": "Bicho"
+          }
+        ],
+        "rareza": "comun",
+        "velocidad": 21
       }
     ],
     "monedas_actuales": 0,
-    "monedas_acumuladas": 0,
+    "monedas_acumuladas": 100,
     "sobres_pendientes": [],
     "usuario": "fabes",
+    "victorias": 1
+  },
+  {
+    "clave": "clave123",
+    "equipos": {},
+    "inventario": [],
+    "monedas_actuales": 0,
+    "monedas_acumuladas": 0,
+    "sobres_pendientes": [
+      {
+        "id": 372315,
+        "tipo": "basico"
+      }
+    ],
+    "usuario": "test_731343",
     "victorias": 0
   }
 ]

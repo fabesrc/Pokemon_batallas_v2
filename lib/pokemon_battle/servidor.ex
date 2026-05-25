@@ -1,6 +1,6 @@
 defmodule PokemonBattle.Servidor do
   alias PokemonBattle.{
-    GestorEntrenadores, GestorSalas, SistemaSobres, Cluster
+    GestorEntrenadores, GestorSalas, GestorTrades, SistemaSobres, Cluster, Intercambio
   }
 
   # Estado de la sesion actual del jugador
@@ -25,8 +25,10 @@ defmodule PokemonBattle.Servidor do
     # Revisar si hay mensajes de otros procesos (eventos)
     state = revisar_buzon(state)
     prompt = if state.user do
-      t = GestorEntrenadores.obtener(state.user)
-      "#{state.user}(#{t.monedas_actuales})> "
+      case GestorEntrenadores.obtener(state.user) do
+        %{monedas_actuales: m} -> "#{state.user}(#{m})> "
+        _ -> "#{state.user}> "
+      end
     else
       "(sin login)> "
     end
@@ -68,7 +70,7 @@ defmodule PokemonBattle.Servidor do
         revisar_buzon(state)
 
       {:intercambio_completado, _} ->
-        IO.puts("\n Intercambio finalizado con éxito.")
+        IO.puts("\n[TRADE] Intercambio finalizado. Revisa tu inventario.")
         %{state | trade: nil}
 
     after
@@ -82,11 +84,17 @@ defmodule PokemonBattle.Servidor do
   defp procesar("ayuda", s), do: mostrar_ayuda(s)
 
   defp procesar(input, state) do
-    input = if (state.batalla || state.sala) && Regex.match?(~r/^\d+$/, input) do
-      "atacar #{input}"
-    else
-      input
-    end
+    input =
+      cond do
+        state.batalla && Regex.match?(~r/^\d+$/, input) ->
+          "atacar #{input}"
+
+        state.trade && Regex.match?(~r/^\d{5,}$/, input) ->
+          "ofrecer #{input}"
+
+        true ->
+          input
+      end
 
     [cmd | args] = String.split(input, " ")
     ejecutar(cmd, args, state)
@@ -128,11 +136,21 @@ defmodule PokemonBattle.Servidor do
 
   # Perfil e Inventario
   defp ejecutar("perfil", _, s) do
-    t = GestorEntrenadores.obtener(s.user)
-    IO.puts("\n--- PERFIL DE #{s.user} ---")
-    IO.puts("Victorias: #{t.victorias} | Monedas: #{t.monedas_actuales}")
-    IO.puts("Pokémon: #{length(t.inventario)}")
-    {:ok, s}
+    case GestorEntrenadores.obtener(s.user) do
+      {:error, msg} ->
+        {:error, "No se pudo cargar el perfil: #{msg}", s}
+
+      nil ->
+        {:error, "No se encontró tu perfil", s}
+
+      t ->
+        IO.puts("\n--- PERFIL DE #{s.user} ---")
+        IO.puts("Victorias: #{t.victorias}")
+        IO.puts("Monedas actuales: #{t.monedas_actuales}")
+        IO.puts("Monedas acumuladas (total histórico): #{t.monedas_acumuladas}")
+        IO.puts("Pokémon en inventario: #{length(t.inventario)}")
+        {:ok, s}
+    end
   end
 
   defp ejecutar("inventario", _, s) do
@@ -214,11 +232,15 @@ defmodule PokemonBattle.Servidor do
       is_nil(s.batalla) ->
         {:error, "No estás en una batalla activa", s}
       s.esperando_cambio ->
-        {:error, "Tu Pokémon está debilitado, debes usar el comando 'cambiar <id_pkm>'", s}
+        {:error, "Tu Pokémon está debilitado. Mira arriba los IDs disponibles y usa: cambiar <id>", s}
       true ->
         IO.puts("[SISTEMA] Enviando orden de ataque ##{n}...")
-        PokemonBattle.Batalla.accion(s.batalla, s.user, n)
-        {:ok, s}
+
+        case PokemonBattle.Batalla.accion(s.batalla, s.user, n) do
+          :ok -> {:ok, s}
+          {:error, msg} -> {:error, msg, s}
+          other -> {:error, "No se pudo enviar el ataque: #{inspect(other)}", s}
+        end
     end
   end
 
@@ -232,6 +254,17 @@ defmodule PokemonBattle.Servidor do
       IO.puts("#{i}. #{t.usuario} - Wins: #{t.victorias} | total: #{t.monedas_acumuladas}")
     end)
     {:ok, s}
+  end
+
+  defp ejecutar("borrar_equipo", [nombre], s) do
+    case GestorEntrenadores.borrar_equipo(s.user, nombre) do
+      :ok ->
+        IO.puts("Equipo '#{nombre}' eliminado. Ya puedes intercambiar esos Pokémon.")
+        {:ok, s}
+
+      {:error, e} ->
+        {:error, e, s}
+    end
   end
 
   defp ejecutar("listar_equipos", _, s) do
@@ -256,17 +289,151 @@ defmodule PokemonBattle.Servidor do
     {:ok, s}
   end
 
+  defp ejecutar("listar_salas", _, s) do
+    salas = GestorSalas.listar_salas()
+
+    if salas == [] do
+      IO.puts("\nNo hay salas de batalla abiertas.")
+    else
+      IO.puts("\n=== SALAS DE BATALLA ===")
+
+      Enum.each(salas, fn sala ->
+        IO.puts("#{sala.id} | Creador: #{sala.user} | Equipo: #{sala.equipo}")
+      end)
+    end
+
+    {:ok, s}
+  end
+
+  # Intercambio de Pokémon
+  defp ejecutar("crear_trade", [], s) do
+    cond do
+      s.trade ->
+        {:error, "Ya estás en un intercambio (#{s.trade})", s}
+
+      s.batalla ->
+        {:error, "Termina la batalla antes de intercambiar", s}
+
+      true ->
+        case GestorTrades.crear(s.user) do
+          {:ok, id} ->
+            IO.puts("Sala de intercambio #{id} creada. Comparte el código con otro jugador.")
+            IO.puts("Comando para unirse: unirse_trade #{id}")
+            {:ok, %{s | trade: id}}
+
+          {:error, e} ->
+            {:error, e, s}
+        end
+    end
+  end
+
+  defp ejecutar("unirse_trade", [id], s) do
+    cond do
+      s.trade ->
+        {:error, "Ya estás en un intercambio", s}
+
+      s.batalla ->
+        {:error, "Termina la batalla antes de intercambiar", s}
+
+      true ->
+        case GestorTrades.unirse(id, s.user) do
+          {:ok, trade_id} ->
+            IO.puts("¡Te uniste al intercambio #{trade_id}!")
+            {:ok, %{s | trade: trade_id}}
+
+          {:error, e} ->
+            {:error, e, s}
+        end
+    end
+  end
+
+  defp ejecutar("listar_trades", _, s) do
+    trades = GestorTrades.listar()
+
+    if trades == [] do
+      IO.puts("\nNo hay salas de intercambio abiertas.")
+    else
+      IO.puts("\n=== SALAS DE INTERCAMBIO ===")
+
+      Enum.each(trades, fn t ->
+        IO.puts("#{t.id} | Creador: #{t.creador}")
+      end)
+    end
+
+    {:ok, s}
+  end
+
+  defp ejecutar("ofrecer", [id_str], s) do
+    if s.trade do
+      case Intercambio.ofrecer(s.trade, s.user, id_str) do
+        :ok -> {:ok, s}
+        {:error, msg} -> {:error, msg, s}
+        other -> {:error, "Error al ofrecer: #{inspect(other)}", s}
+      end
+    else
+      {:error, "No estás en un intercambio. Usa crear_trade o unirse_trade <cod>", s}
+    end
+  end
+
+  defp ejecutar("confirmar_trade", [], s) do
+    if s.trade do
+      case Intercambio.confirmar(s.trade, s.user) do
+        :ok -> {:ok, s}
+        {:error, msg} -> {:error, msg, s}
+        other -> {:error, "Error al confirmar: #{inspect(other)}", s}
+      end
+    else
+      {:error, "No estás en un intercambio activo", s}
+    end
+  end
+
+  defp ejecutar("cancelar_trade", [], s) do
+    cond do
+      s.trade ->
+        case Intercambio.cancelar(s.trade, s.user) do
+          :ok ->
+            IO.puts("Intercambio cancelado.")
+            {:ok, %{s | trade: nil}}
+
+          {:error, msg} ->
+            {:error, msg, s}
+        end
+
+      true ->
+        case GestorTrades.listar() do
+          [] ->
+            {:error, "No tienes intercambio activo ni sala pendiente", s}
+
+          trades ->
+            mia = Enum.find(trades, &(&1.creador == s.user))
+
+            if mia do
+              GestorTrades.cancelar_pendiente(mia.id, s.user)
+              IO.puts("Sala #{mia.id} cancelada.")
+              {:ok, s}
+            else
+              {:error, "No tienes intercambio activo", s}
+            end
+        end
+    end
+  end
+
   defp ejecutar("cambiar", [id_str], s) do
     if s.batalla do
       id_buscado = String.to_integer(id_str)
 
       idx = Enum.find_index(s.equipo_ids, &(&1 == id_buscado))
 
-      if idx do
-        PokemonBattle.Batalla.cambiar_pokemon(s.batalla, s.user, idx)
-        {:ok, %{s | esperando_cambio: false}}
-      else
-        {:error, "Ese Pokémon no es parte del equipo que llevaste a esta batalla", s}
+      cond do
+        is_nil(idx) ->
+          {:error, "Ese ID no es parte de tu equipo en esta batalla. Usa listar_equipos para ver los IDs.", s}
+
+        true ->
+          case PokemonBattle.Batalla.cambiar_pokemon(s.batalla, s.user, idx) do
+            :ok -> {:ok, %{s | esperando_cambio: false}}
+            {:error, msg} -> {:error, msg, s}
+            other -> {:error, "No se pudo cambiar: #{inspect(other)}", s}
+          end
       end
     else
       {:error, "No estás en una batalla activa", s}
@@ -283,10 +450,12 @@ defmodule PokemonBattle.Servidor do
       {:batalla_evento, msg} ->
         IO.puts("\n[BATALLA] #{msg}")
         cond do
-          String.contains?(msg, "Esperando cambios de pokemon") ->
+          String.starts_with?(msg, "Esperando cambios de pokemon") ->
             send(shell_pid, {:sync_batalla, :esperando_cambio, true})
+
           String.contains?(msg, "=== TURNO") ->
             send(shell_pid, {:sync_batalla, :esperando_cambio, false})
+
           true ->
             :ok
         end
@@ -299,6 +468,11 @@ defmodule PokemonBattle.Servidor do
 
       {:intercambio_evento, msg} ->
         IO.puts("\n[TRADE] #{msg}")
+        escuchador_mensajes(shell_pid)
+
+      {:intercambio_completado, _} ->
+        IO.puts("\n[TRADE] Intercambio completado.")
+        send(shell_pid, {:intercambio_completado, true})
         escuchador_mensajes(shell_pid)
 
       _ ->
@@ -319,6 +493,7 @@ defmodule PokemonBattle.Servidor do
     GESTIÓN DE EQUIPOS
     - crear_equipo <nom> <id1,id2,id3>
     - listar_equipos       : Ver tus equipos guardados
+    - borrar_equipo <nom>  : Borrar equipo (necesario antes de intercambiar un Pokémon del equipo)
     - usar_equipo <nom>    : Seleccionar equipo para la batalla
 
     TIENDA Y SOBRES
@@ -331,15 +506,16 @@ defmodule PokemonBattle.Servidor do
     - crear_sala <equipo>  : Crear sala de duelo
     - unirse <id> <equipo> : Entrar a una batalla
     - atacar <num>         : Usar movimiento (1-4)
-    - cambiar <id_pkm>     : Cambiar Pokémon activo
+    - cambiar <id_pkm>     : Tras debilitarse, enviar el ID de otro Pokémon vivo
     - rendirse             : Abandonar la batalla actual
 
     INTERCAMBIO
-    - crear_trade          : Crear sala de intercambio
-    - unirse_trade <cod>   : Unirse a sala de intercambio
-    - ofrecer <id_pkm>     : Proponer Pokémon para cambio
-    - confirmar_trade      : Aceptar el intercambio actual
-    - cancelar_trade       : Cerrar sala de intercambio
+    - crear_trade          : Crear sala de intercambio (código T-N)
+    - listar_trades        : Ver salas de intercambio abiertas
+    - unirse_trade <cod>   : Unirse a sala (ej: unirse_trade T-1)
+    - ofrecer <id_pkm>     : Proponer Pokémon (ver IDs en inventario)
+    - confirmar_trade      : Confirmar cuando ambos ofrecieron
+    - cancelar_trade       : Cancelar intercambio o sala pendiente
 
     SISTEMA:
     - ayuda / salir
