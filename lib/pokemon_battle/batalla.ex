@@ -2,7 +2,7 @@ defmodule PokemonBattle.Batalla do
   use GenServer, restart: :temporary
   alias PokemonBattle.{MotorCombate, GestorEntrenadores, Persistencia}
 
-  @t_turno 20_000
+  @t_turno 60_000
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: via(opts[:sala_id]))
@@ -10,9 +10,52 @@ defmodule PokemonBattle.Batalla do
 
   def via(id), do: {:via, Registry, {PokemonBattle.Registry, {:batalla, id}}}
 
-  # API
-  def accion(id, user, act), do: GenServer.cast(via(id), {:accion, user, act})
-  def cambiar_pokemon(id, user, idx), do: GenServer.cast(via(id), {:cambio, user, idx})
+  # API (enruta al nodo donde vive el proceso de batalla)
+  def accion(id, user, act) do
+    case nodo_batalla(id) do
+      nil ->
+        {:error, "No se encontró la batalla #{id}. ¿Sigue activa?"}
+
+      n when n == node() ->
+        GenServer.call(via(id), {:accion, user, act}, 5_000)
+
+      n ->
+        case :rpc.call(n, __MODULE__, :accion_en_nodo, [id, user, act]) do
+          {:badrpc, razon} -> {:error, "Error de red con #{n}: #{inspect(razon)}"}
+          res -> res
+        end
+    end
+  end
+
+  def accion_en_nodo(id, user, act), do: GenServer.call(via(id), {:accion, user, act}, 5_000)
+
+  def cambiar_pokemon(id, user, idx) do
+    case nodo_batalla(id) do
+      nil ->
+        {:error, "No se encontró la batalla #{id}"}
+
+      n when n == node() ->
+        GenServer.call(via(id), {:cambio, user, idx}, 5_000)
+
+      n ->
+        case :rpc.call(n, __MODULE__, :cambiar_en_nodo, [id, user, idx]) do
+          {:badrpc, razon} -> {:error, "Error de red con #{n}: #{inspect(razon)}"}
+          res -> res
+        end
+    end
+  end
+
+  def cambiar_en_nodo(id, user, idx), do: GenServer.call(via(id), {:cambio, user, idx}, 5_000)
+
+  defp nodo_batalla(id) do
+    Enum.find_value([node() | Node.list()], fn n ->
+      case :rpc.call(n, Registry, :lookup, [PokemonBattle.Registry, {:batalla, id}]) do
+        [{_pid, _}] -> n
+        [] -> nil
+        _ -> nil
+      end
+    end)
+  end
 
   # Callbacks
   @impl true
@@ -28,7 +71,7 @@ defmodule PokemonBattle.Batalla do
       j2: crear_j(opts[:j2], tipos),
       turno: 1,
       acts: %{},
-      timer: nil,
+      timer_ref: nil,
       status: :jugando,
       reemplazos: [],
       nodo: opts[:nodo] || node()
@@ -38,63 +81,126 @@ defmodule PokemonBattle.Batalla do
     aviso_ambos(state, "--- Batalla Iniciada! ---")
     mostrar_opciones(state)
 
-    {:ok, %{state | timer: iniciar_timer()}}
+    {:ok, iniciar_timer(state)}
   end
 
   @impl true
-  def handle_cast({:accion, user, act}, state) do
-    # evitar que un jugador mueva dos veces o mueva fuera de tiempo
-    if state.status != :jugando or Map.has_key?(state.acts, user) do
-      {:noreply, state}
-    else
-      new_acts = Map.put(state.acts, user, act)
+  def handle_call({:accion, user, act}, _from, state) do
+    cond do
+      state.status == :reemplazo ->
+        j = get_j(state, user)
 
-      if map_size(new_acts) == 2 do
-        # Si ambos movieron, procesamos como siempre
-        Process.cancel_timer(state.timer)
-        {:noreply, procesar_turno(%{state | acts: new_acts})}
-      else
+        {:reply,
+         {:error,
+          "Debes elegir otro Pokémon. Usa: cambiar <id>\n#{texto_equipo_disponible(j)}"},
+         state}
+
+      state.status == :fin ->
+        {:reply, {:error, "La batalla ya terminó"}, state}
+
+      state.status != :jugando ->
+        {:reply, {:error, "No puedes atacar en este momento"}, state}
+
+      Map.has_key?(state.acts, user) ->
+        {:reply, {:error, "Ya enviaste tu movimiento este turno. Espera al rival o al siguiente turno."},
+         state}
+
+      true ->
         new_acts = Map.put(state.acts, user, act)
-        {p_actual, p_rival} = j_y_rival(state, user)
 
-        # [MEJORA] Mensaje para el que ya movió
-        send(p_actual.pid, {:batalla_evento, "Orden recibida. Esperando a que #{p_rival.nombre} elija su movimiento..."})
+        if map_size(new_acts) == 2 do
+          state = cancelar_timer(state)
+          new_state = procesar_turno(%{state | acts: new_acts})
+          {:reply, :ok, new_state}
+        else
+          {p_actual, p_rival} = j_y_rival(state, user)
 
-        # [MEJORA] Mensaje para el que falta por mover (presión)
-        send(p_rival.pid, {:batalla_evento, "¡#{user} ya envió su ataque! El turno se resolverá en cuanto tú elijas."})
+          send(p_actual.pid,
+                {:batalla_evento,
+                 "Orden recibida. Esperando a que #{p_rival.nombre} elija su movimiento..."})
 
-        {:noreply, %{state | acts: new_acts}}
-      end
+          send(p_rival.pid,
+                {:batalla_evento,
+                 "¡#{user} ya envió su ataque! El turno se resolverá en cuanto tú elijas."})
+
+          {:reply, :ok, %{state | acts: new_acts}}
+        end
     end
   end
 
   @impl true
-  def handle_cast({:cambio, user, idx}, state) do
+  def handle_call({:cambio, user, idx}, _from, state) do
     if user in state.reemplazos do
       j = get_j(state, user)
-      # Cambiar el índice del pokemon activo
-      nuevo_j = %{j | activo: idx}
-      state = set_j(state, nuevo_j)
 
-      restantes = List.delete(state.reemplazos, user)
-      if restantes == [] do
-        {:noreply, nuevo_turno(%{state | reemplazos: []})}
-      else
-        {:noreply, %{state | reemplazos: restantes}}
+      cond do
+        idx < 0 or idx >= length(j.pokes) ->
+          {:reply, {:error, "Índice de Pokémon inválido"}, state}
+
+        Enum.at(j.hp, idx) <= 0 ->
+          {:reply,
+           {:error,
+            "Ese Pokémon está debilitado y no puede combatir.\n#{texto_equipo_disponible(j)}"},
+           state}
+
+        idx == j.activo ->
+          {:reply,
+           {:error,
+            "Ese Pokémon ya está en combate (debilitado). Elige otro:\n#{texto_equipo_disponible(j)}"},
+           state}
+
+        true ->
+          pkm = Enum.at(j.pokes, idx)
+          hp = Enum.at(j.hp, idx)
+
+          send(j.pid,
+                {:batalla_evento,
+                 "¡#{pkm.especie} entra al combate! (HP: #{hp}/100, ID: #{pkm.id})"})
+
+          nuevo_j = %{j | activo: idx}
+          state = set_j(state, nuevo_j)
+          restantes = List.delete(state.reemplazos, user)
+
+          new_state =
+            if restantes == [] do
+              nuevo_turno(%{state | reemplazos: []})
+            else
+              %{state | reemplazos: restantes}
+            end
+
+          {:reply, :ok, new_state}
       end
     else
-      {:noreply, state}
+      {:reply, {:error, "No necesitas cambiar de Pokémon ahora"}, state}
     end
   end
 
+  # Ignorar mensajes viejos del formato anterior (:timeout sin ref)
   @impl true
-  def handle_info(:timeout, state) do
-    # Si alguien no movió, pasa
-    acts = state.acts
-    |> Map.put_new(state.j1.nombre, "pasar")
-    |> Map.put_new(state.j2.nombre, "pasar")
+  def handle_info(:timeout, state), do: {:noreply, state}
 
-    {:noreply, procesar_turno(%{state | acts: acts})}
+  @impl true
+  def handle_info({:timeout, ref}, state) do
+    # Ignorar timeouts viejos que quedaron en el buzón tras cancelar el timer
+    if state.timer_ref == ref and state.status == :jugando do
+      faltan =
+        [state.j1.nombre, state.j2.nombre]
+        |> Enum.reject(&Map.has_key?(state.acts, &1))
+
+      if faltan != [] do
+        aviso_ambos(state, "Tiempo agotado. #{Enum.join(faltan, " y ")} no eligió a tiempo.")
+      end
+
+      acts =
+        state.acts
+        |> Map.put_new(state.j1.nombre, "pasar")
+        |> Map.put_new(state.j2.nombre, "pasar")
+
+      state = cancelar_timer(state)
+      {:noreply, procesar_turno(%{state | acts: acts})}
+    else
+      {:noreply, state}
+    end
   end
 
   # Lógica de Turno
@@ -120,6 +226,8 @@ defmodule PokemonBattle.Batalla do
   end
 
   defp ejecutar_ataque(s, nom_atk) do
+    if Map.get(s.acts, nom_atk) == "pasar", do: s
+
     {atk, defen} = j_y_rival(s, nom_atk)
     p_atk = Enum.at(atk.pokes, atk.activo)
     p_def = Enum.at(defen.pokes, defen.activo)
@@ -157,28 +265,38 @@ defmodule PokemonBattle.Batalla do
       true ->
 
         muertos = for j <- [s.j1, s.j2], Enum.at(j.hp, j.activo) <= 0, do: j.nombre
+
         if muertos == [] do
           nuevo_turno(s)
         else
-          aviso_ambos(s, "Esperando cambios de pokemon...")
-          %{s | status: :reemplazo, reemplazos: muertos}
+          iniciar_fase_reemplazo(s, muertos)
         end
     end
   end
 
   defp nuevo_turno(s) do
-    s = %{s | turno: s.turno + 1, status: :jugando}
+    s =
+      s
+      |> cancelar_timer()
+      |> Map.merge(%{turno: s.turno + 1, status: :jugando, acts: %{}})
+
     mostrar_opciones(s)
-    %{s | timer: iniciar_timer()}
+    iniciar_timer(s)
   end
 
   defp terminar(s, ganador) do
-    aviso_ambos(s, "FIN: Ganador #{ganador}")
+    s = cancelar_timer(s)
+    if ganador != :empate do
+      perdedor = if s.j1.nombre == ganador, do: s.j2.nombre, else: s.j1.nombre
+      aviso_ambos(s, "FIN: Ganador #{ganador} (+100 monedas) | #{perdedor} (+30 monedas)")
+    else
+      aviso_ambos(s, "FIN: Empate")
+    end
+
     send(s.j1.pid, {:batalla_terminada, %{ganador: ganador, sala_id: s.id}})
     send(s.j2.pid, {:batalla_terminada, %{ganador: ganador, sala_id: s.id}})
 
     if ganador != :empate do
-      # quien es el perdedor
       perdedor = if s.j1.nombre == ganador, do: s.j2.nombre, else: s.j1.nombre
 
       # recompensa ganador: +100
@@ -214,12 +332,104 @@ defmodule PokemonBattle.Batalla do
     }
   end
 
-  defp iniciar_timer, do: Process.send_after(self(), :timeout, @t_turno)
+  defp iniciar_timer(s) do
+    ref = make_ref()
+    Process.send_after(self(), {:timeout, ref}, @t_turno)
+    %{s | timer_ref: ref}
+  end
+
+  defp cancelar_timer(s) do
+    if s.timer_ref, do: Process.cancel_timer(s.timer_ref)
+    %{s | timer_ref: nil}
+  end
 
   defp get_j(s, nom), do: if(s.j1.nombre == nom, do: s.j1, else: s.j2)
   defp set_j(s, j), do: if(s.j1.nombre == j.nombre, do: %{s | j1: j}, else: %{s | j2: j})
   defp j_y_rival(s, nom), do: if(s.j1.nombre == nom, do: {s.j1, s.j2}, else: {s.j2, s.j1})
   defp tiene_hp?(j), do: Enum.at(j.hp, j.activo) > 0
+
+  defp iniciar_fase_reemplazo(s, muertos) do
+    s = cancelar_timer(s)
+
+    {s, pendientes} =
+      Enum.reduce_while(muertos, {s, []}, fn nombre, {acc, lista} ->
+        j = get_j(acc, nombre)
+        disponibles = indices_disponibles(j)
+
+        if disponibles == [] do
+          {:halt, {terminar(acc, rival_de(acc, nombre)), []}}
+        else
+          notificar_reemplazo(j, disponibles)
+          {:cont, {acc, [nombre | lista]}}
+        end
+      end)
+
+    if pendientes == [] do
+      s
+    else
+      %{s | status: :reemplazo, reemplazos: pendientes}
+    end
+  end
+
+  defp rival_de(s, nombre), do: if(s.j1.nombre == nombre, do: s.j2.nombre, else: s.j1.nombre)
+
+  defp indices_disponibles(j) do
+    j.hp
+    |> Enum.with_index()
+    |> Enum.filter(fn {hp, _idx} -> hp > 0 end)
+    |> Enum.map(fn {_hp, idx} -> idx end)
+  end
+
+  defp notificar_reemplazo(j, disponibles) do
+    debilitado = Enum.at(j.pokes, j.activo)
+
+    send(j.pid,
+         {:batalla_evento,
+          """
+          Esperando cambios de pokemon...
+
+          ¡Tu #{debilitado.especie} (ID: #{debilitado.id}) se debilitó y no puede seguir en combate!
+
+          Elige tu siguiente Pokémon con: cambiar <id>
+          #{texto_lista_disponibles(j, disponibles)}
+
+          #{texto_lista_debilitados(j, disponibles)}
+          """})
+  end
+
+  defp texto_lista_disponibles(j, disponibles) do
+    lineas =
+      Enum.map(disponibles, fn idx ->
+        p = Enum.at(j.pokes, idx)
+        hp = Enum.at(j.hp, idx)
+        "  -> cambiar #{p.id}   #{p.especie} (HP: #{hp}/100)"
+      end)
+
+    "Pokémon DISPONIBLES:\n" <> Enum.join(lineas, "\n")
+  end
+
+  defp texto_lista_debilitados(j, disponibles) do
+    debilitados =
+      j.pokes
+      |> Enum.with_index()
+      |> Enum.reject(fn {_p, idx} -> idx in disponibles end)
+
+    if debilitados == [] do
+      ""
+    else
+      lineas =
+        Enum.map(debilitados, fn {p, _idx} ->
+          "  x  ##{p.id}   #{p.especie}  (DEBILITADO - no se puede usar)"
+        end)
+
+      "Pokémon NO disponibles:\n" <> Enum.join(lineas, "\n")
+    end
+  end
+
+  defp texto_equipo_disponible(j) do
+    disponibles = indices_disponibles(j)
+    texto_lista_disponibles(j, disponibles)
+  end
 
   defp aviso_ambos(s, msg) do
     send(s.j1.pid, {:batalla_evento, msg})

@@ -9,6 +9,7 @@ defmodule PokemonBattle.Application do
       # Los gestores
       PokemonBattle.GestorEntrenadores,
       PokemonBattle.GestorSalas,
+      PokemonBattle.GestorTrades,
 
       # Supervisores dinamicos
       {DynamicSupervisor, name: PokemonBattle.SupBatallas, strategy: :one_for_one},

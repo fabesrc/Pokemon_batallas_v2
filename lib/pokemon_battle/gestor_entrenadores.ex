@@ -5,6 +5,8 @@ defmodule PokemonBattle.GestorEntrenadores do
   def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   # API
+  def iniciar_sesion(user, pass), do: iniciar_sesion_con_pid(user, pass, self())
+
   def iniciar_sesion_con_pid(user, pass, pid_externo) do
     GenServer.call(__MODULE__, {:login, user, pass, pid_externo})
   end
@@ -13,26 +15,42 @@ defmodule PokemonBattle.GestorEntrenadores do
   def pid_sesion(user), do: GenServer.call(__MODULE__, {:get_pid, user})
 
   def obtener(user) do
-    nodos = [node() | Node.list()]
-    nodo_sesion = Enum.find(nodos, fn n ->
-      :rpc.call(n, __MODULE__, :esta_en_sesion?, [user]) == true
-    end) || node()
-
-    :rpc.call(nodo_sesion, GenServer, :call, [__MODULE__, {:get, user}])
+    call_en_nodo(user, {:get, user})
   end
+
   def todos, do: GenServer.call(__MODULE__, :todos)
 
-  # Acciones de dinero y items
-  def actualizar_monedas(u, d), do: GenServer.call(__MODULE__, {:mod_money, u, d})
-  def agregar_sobre(u, s), do: GenServer.call(__MODULE__, {:add_pack, u, s})
-  def quitar_sobre(u, id), do: GenServer.call(__MODULE__, {:rem_pack, u, id})
-  def agregar_pokemon(u, p), do: GenServer.call(__MODULE__, {:add_pkmn, u, p})
-  def quitar_pokemon(u, id), do: GenServer.call(__MODULE__, {:rem_pkmn, u, id})
-  def sumar_victoria(u), do: GenServer.call(__MODULE__, {:win, u})
+  # Acciones de dinero y items (siempre en el nodo donde el usuario tiene sesión)
+  def actualizar_monedas(u, d), do: call_en_nodo(u, {:mod_money, u, d})
+  def agregar_sobre(u, s), do: call_en_nodo(u, {:add_pack, u, s})
+  def quitar_sobre(u, id), do: call_en_nodo(u, {:rem_pack, u, id})
+  def agregar_pokemon(u, p), do: call_en_nodo(u, {:add_pkmn, u, p})
+  def quitar_pokemon(u, id), do: call_en_nodo(u, {:rem_pkmn, u, id})
+  def sumar_victoria(u), do: call_en_nodo(u, {:win, u})
 
   # Equipos
-  def crear_equipo(u, nom, ids), do: GenServer.call(__MODULE__, {:new_team, u, nom, ids})
-  def borrar_equipo(u, nom), do: GenServer.call(__MODULE__, {:del_team, u, nom})
+  def crear_equipo(u, nom, ids), do: call_en_nodo(u, {:new_team, u, nom, ids})
+  def borrar_equipo(u, nom), do: call_en_nodo(u, {:del_team, u, nom})
+
+  # Envía la operación al nodo donde el jugador inició sesión (evita datos desactualizados en clúster)
+  defp call_en_nodo(user, msg) do
+    nodo =
+      Enum.find_value([node() | Node.list()], fn n ->
+        case :rpc.call(n, __MODULE__, :esta_en_sesion?, [user]) do
+          true -> n
+          _ -> nil
+        end
+      end) || node()
+
+    if nodo == node() do
+      GenServer.call(__MODULE__, msg)
+    else
+      case :rpc.call(nodo, GenServer, :call, [__MODULE__, msg]) do
+        {:badrpc, razon} -> {:error, "Error de red con #{nodo}: #{inspect(razon)}"}
+        res -> res
+      end
+    end
+  end
 
   # Callbacks
   @impl true
@@ -243,16 +261,16 @@ defmodule PokemonBattle.GestorEntrenadores do
     %{
       "id" => p.id,
       "especie" => p.especie,
-      "rareza" => p.rareza,
+      "rareza" => Map.get(p, :rareza, "comun"),
       "ataque" => p.ataque,
       "defensa" => p.defensa,
       "velocidad" => p.velocidad,
       "dueño_original" => p.dueño_original,
-      "movimientos" => Enum.map(p.movimientos, fn m ->
+      "movimientos" => Enum.map(p.movimientos || [], fn m ->
         %{
-          "nombre" => m.nombre,
-          "tipo" => m.tipo,
-          "poder_base" => m.poder_base
+          "nombre" => Map.get(m, :nombre),
+          "tipo" => Map.get(m, :tipo),
+          "poder_base" => Map.get(m, :poder_base)
         }
       end)
     }
